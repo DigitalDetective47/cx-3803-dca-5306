@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+console.log("THREE.js loaded:", THREE);
+
 
 const width = window.innerWidth, height = window.innerHeight;
 
