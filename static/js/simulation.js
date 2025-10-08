@@ -1,34 +1,70 @@
 import * as THREE from 'three';
-console.log("THREE.js loaded:", THREE);
+import { OrbitControls } from 'OrbitControls';
 
-
-const width = window.innerWidth, height = window.innerHeight;
-
-// init
-
-const camera = new THREE.PerspectiveCamera( 70, width / height, 0.01, 10 );
-camera.position.z = 1;
 
 const scene = new THREE.Scene();
 
-const geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
-const material = new THREE.MeshNormalMaterial();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.set(80, 25, 40);
+camera.lookAt(0, 5, 0);
 
-const mesh = new THREE.Mesh( geometry, material );
-scene.add( mesh );
+// Renderer setup
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('scene') });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0xeeeeee);
+renderer.shadowMap.enabled = true;
 
-const renderer = new THREE.WebGLRenderer( { antialias: true } );
-renderer.setSize( width, height );
-renderer.setAnimationLoop( animate );
-document.body.appendChild( renderer.domElement );
+// Lighting
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(5, 5, 5);
+scene.add(light);
 
-// animation
+// Add a ground plane
+const plane = new THREE.Mesh(
+  new THREE.PlaneGeometry(100000, 100000),
+  new THREE.MeshStandardMaterial({ color: 0xaaaaaa })
+);
+plane.rotation.x = -Math.PI / 2;
+scene.add(plane);
 
-function animate( time ) {
+// Add a truck
+const truckGeometry = new THREE.BoxGeometry(53, 8.5, 9);
+const truckMaterial = new THREE.MeshBasicMaterial({
+  color: 0x222222,
+  transparent: true,
+  opacity: 0.1,
+});
 
-	mesh.rotation.x = time / 2000;
-	mesh.rotation.y = time / 1000;
+// Create truck mesh
+const truck = new THREE.Mesh(truckGeometry, truckMaterial);
+truck.position.y = 8.5 / 2;
+scene.add(truck);
 
-	renderer.render( scene, camera );
+const edges = new THREE.EdgesGeometry(truckGeometry);
+const outline = new THREE.LineSegments(
+  edges,
+  new THREE.LineBasicMaterial({ color: 0x000000 })
+);
+truck.add(outline);
 
+// Controls (click + drag)
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI / 2.1;
+controls.maxDistance = 100;
+
+
+// Resize support
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Animation loop
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
 }
+animate();
