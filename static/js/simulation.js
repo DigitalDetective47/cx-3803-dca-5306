@@ -32,12 +32,12 @@ const truckGeometry = new THREE.BoxGeometry(53, 8.5, 9);
 const truckMaterial = new THREE.MeshBasicMaterial({
   color: 0x222222,
   transparent: true,
-  opacity: 0.1,
+  opacity: 0.2,
 });
 
 // Create truck mesh
 const truck = new THREE.Mesh(truckGeometry, truckMaterial);
-truck.position.y = 8.5 / 2 + 1;
+truck.position.y = 8.5 / 2 + 0.5;
 scene.add(truck);
 
 const edges = new THREE.EdgesGeometry(truckGeometry);
@@ -51,6 +51,7 @@ truck.add(outline);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.maxPolarAngle = Math.PI / 2.1;
+controls.minDistance = 10;  
 controls.maxDistance = 100;
 
 
