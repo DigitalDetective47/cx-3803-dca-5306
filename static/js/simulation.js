@@ -37,7 +37,7 @@ const truckMaterial = new THREE.MeshBasicMaterial({
 
 // Create truck mesh
 const truck = new THREE.Mesh(truckGeometry, truckMaterial);
-truck.position.y = 8.5 / 2;
+truck.position.y = 8.5 / 2 + 1;
 scene.add(truck);
 
 const edges = new THREE.EdgesGeometry(truckGeometry);
