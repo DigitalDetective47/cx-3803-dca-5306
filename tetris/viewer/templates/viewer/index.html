@@ -1,0 +1,32 @@
+{% load static %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <meta charset="UTF-8">
+  <title>3D Truck Loader</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+  </style>
+   <script type="importmap">
+  {
+    "imports": {
+      "three": "{% static 'viewer/js/node_modules/three/build/three.module.js' %}",
+      "three/examples/jsm/": "{% static 'viewer/js/node_modules/three/examples/jsm/' %}"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+  <p>Hey what's up</p>
+
+  <!-- Include Three.js and your script -->
+  <script type="module" src="{% static 'viewer/js/main.js' %}"></script>
+</body>
+</html>
+
+
