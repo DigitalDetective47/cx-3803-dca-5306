@@ -5,13 +5,19 @@ from django.db.models import (
     FloatField,
     ForeignKey,
     Model,
-    PositiveBigIntegerField,
+    PositiveBigIntegerField,BooleanField
 )
+
+from .rotation import Rotation, RotationField
 
 
 class Shipment(Model):
     id = PositiveBigIntegerField(primary_key=True)
-    name = CharField(max_length=64)
+    name = CharField(max_length=64, blank=True)
+
+
+class Simulation(Model):
+    time = DateTimeField()
 
 
 class HandlingUnit(Model):
@@ -22,10 +28,7 @@ class HandlingUnit(Model):
     z_size = FloatField()
     shipment = ForeignKey(Shipment, CASCADE)
     stop = CharField(max_length=3)
-
-
-class Simulation(Model):
-    time = DateTimeField()
+    temp_add = ForeignKey(Simulation, CASCADE, null=True)
 
 
 class SimPlacement(Model):
@@ -33,4 +36,6 @@ class SimPlacement(Model):
     x = FloatField()
     y = FloatField()
     z = FloatField()
+    orientation = RotationField(default=Rotation.XYZ)
     sim = ForeignKey(Simulation, CASCADE)
+    temp_remove = BooleanField(default=False)
