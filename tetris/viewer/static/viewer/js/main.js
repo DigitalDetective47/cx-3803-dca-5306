@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-
+// Store items in the scene
+const items = new Map();
 
 const scene = new THREE.Scene();
 
@@ -62,6 +63,133 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+// Function to add item to 3D scene
+function addItemToScene(item) {
+  // Random color for each item
+  const color = new THREE.Color(Math.random(), Math.random(), Math.random());
+
+  // Create box geometry for the item
+  const geometry = new THREE.BoxGeometry(item.x_size / 12, item.y_size / 12, item.z_size / 12);
+  const material = new THREE.MeshStandardMaterial({
+    color: color,
+    transparent: true,
+    opacity: 0.8
+  });
+
+  const mesh = new THREE.Mesh(geometry, material);
+
+  // Position items outside the trailer (floating, waiting for simulation)
+  // Items will be arranged next to the truck
+  const existingItemsCount = items.size;
+  const offsetX = -40 - (existingItemsCount % 3) * 8;  // Next to truck
+  const offsetY = item.y_size / 2 + 2;  // Slightly elevated
+  const offsetZ = Math.floor(existingItemsCount / 3) * 6 - 6;
+
+  mesh.position.set(offsetX, offsetY, offsetZ);
+
+  // Add edges for better visibility
+  const edges = new THREE.EdgesGeometry(geometry);
+  const outline = new THREE.LineSegments(
+    edges,
+    new THREE.LineBasicMaterial({ color: 0x000000 })
+  );
+  mesh.add(outline);
+
+  scene.add(mesh);
+  items.set(item.id, mesh);
+
+  return mesh;
+}
+
+// Function to load all existing items
+async function loadItems() {
+  try {
+    const response = await fetch('/api/get-items/');
+    const data = await response.json();
+
+    if (data.success) {
+      data.items.forEach(item => {
+        if (!items.has(item.id)) {
+          addItemToScene(item);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error loading items:', error);
+  }
+}
+
+// Handle form submission
+document.getElementById('add-item-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData(e.target);
+  const data = Object.fromEntries(formData.entries());
+
+  const messageEl = document.getElementById('message');
+
+  try {
+    const response = await fetch('/api/add-item/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Show success message
+      messageEl.textContent = result.message;
+      messageEl.className = 'message success';
+      messageEl.style.display = 'block';
+
+      // Add item to 3D scene
+      addItemToScene(result.item);
+
+      // Reset form
+      e.target.reset();
+
+      // Hide message after 3 seconds
+      setTimeout(() => {
+        messageEl.style.display = 'none';
+      }, 3000);
+    } else {
+      // Show error message
+      messageEl.textContent = result.message;
+      messageEl.className = 'message error';
+      messageEl.style.display = 'block';
+    }
+  } catch (error) {
+    messageEl.textContent = 'Error adding item. Please try again.';
+    messageEl.className = 'message error';
+    messageEl.style.display = 'block';
+  }
+});
+
+// Toggle panel functionality
+const toggleBtn = document.getElementById('toggle-panel-btn');
+const uiPanel = document.getElementById('ui-panel');
+let isPanelOpen = true;
+
+toggleBtn.addEventListener('click', () => {
+  isPanelOpen = !isPanelOpen;
+
+  if (isPanelOpen) {
+    uiPanel.classList.remove('collapsed');
+    toggleBtn.classList.add('panel-open');
+    toggleBtn.textContent = '×';
+  } else {
+    uiPanel.classList.add('collapsed');
+    toggleBtn.classList.remove('panel-open');
+    toggleBtn.textContent = 'Add New Item';
+  }
+});
+
+// Load existing items on page load
+loadItems();
 
 // Animation loop
 function animate() {

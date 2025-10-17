@@ -8,8 +8,144 @@
   <meta charset="UTF-8">
   <title>3D Truck Loader</title>
   <style>
-    body { margin: 0; overflow: hidden; }
+    body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
     canvas { display: block; width: 100vw; height: 100vh; }
+
+    #ui-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      min-width: 280px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    #ui-panel.collapsed {
+      transform: translateX(calc(100% + 20px));
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #toggle-panel-btn {
+      position: absolute;
+      top: 5px;
+      right: 25px;
+      background: rgba(76, 175, 80, 0.95);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      width: auto;
+      height: 35px;
+      padding: 8px 12px;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s, transform 0.3s;
+      z-index: 1000;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    #toggle-panel-btn:hover {
+      background: rgba(69, 160, 73, 0.95);
+      transform: scale(1.1);
+    }
+
+    #toggle-panel-btn.panel-open {
+      transform: translateX(-300px);
+      background: rgba(244, 67, 54, 0.95);
+      width: 35px;
+      height: 35px;
+      font-size: 20px;
+      top: 5px;
+      right: 25px;
+    }
+
+    #toggle-panel-btn.panel-open:hover {
+      transform: translateX(-300px) scale(1.1);
+      background: rgba(229, 57, 53, 0.95);
+    }
+
+    #ui-panel h2 {
+      margin: 0 0 15px 0;
+      font-size: 18px;
+      color: #333;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      color: #555;
+      font-weight: 500;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    button:active {
+      background: #3d8b40;
+    }
+
+    .message {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
   </style>
    <script type="importmap">
   {
@@ -22,7 +158,53 @@
 </head>
 <body>
   <canvas id="scene"></canvas>
-  <p>Hey what's up</p>
+
+  <!-- Toggle Button -->
+  <button id="toggle-panel-btn" class="panel-open" title="Toggle Add Item Panel">×</button>
+
+  <!-- UI Panel for Adding Items -->
+  <div id="ui-panel">
+    <h2>Add New Item</h2>
+    <form id="add-item-form">
+      <div class="form-group">
+        <label for="item-id">HU ID</label>
+        <input type="text" id="item-id" name="id" placeholder="Enter HU ID" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-weight">Weight (lbs)</label>
+        <input type="number" id="item-weight" name="weight" step="0.01" placeholder="Enter Weight" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-x-size">Length (in)</label>
+        <input type="number" id="item-x-size" name="x_size" step="0.1" placeholder="Enter Length" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-y-size">Width (in)</label>
+        <input type="number" id="item-y-size" name="y_size" step="0.1" placeholder="Enter Width" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-z-size">Height (in)</label>
+        <input type="number" id="item-z-size" name="z_size" step="0.1" placeholder="Enter Height" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-shipment">Shipment ID</label>
+        <input type="number" id="item-shipment" name="shipment" placeholder="Enter Shipment ID" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-stop">Stop</label>
+        <input type="text" id="item-stop" name="stop" maxlength="3" placeholder="Enter Stop" required>
+      </div>
+
+      <button type="submit">Add Item</button>
+      <div id="message" class="message"></div>
+    </form>
+  </div>
 
   <!-- Include Three.js and your script -->
   <script type="module" src="{% static 'viewer/js/main.js' %}"></script>
