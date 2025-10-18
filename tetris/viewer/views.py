@@ -59,9 +59,16 @@ def add_item(request):
             }
         })
     except Exception as e:
+        error_message = str(e)
+        # Check for duplicate ID error
+        if 'UNIQUE constraint failed' in error_message or 'already exists' in error_message:
+            message = 'Error adding item. HU ID already exists.'
+        else:
+            message = 'Error adding item. Please check your input and try again.'
+
         return JsonResponse({
             'success': False,
-            'message': f'Error adding item: {str(e)}'
+            'message': message
         }, status=400)
 
 @require_http_methods(["GET"])

@@ -398,7 +398,7 @@
         if (result.success) {
           // If no items were created, show error and stay on page
           if (result.items_created === 0) {
-            messageEl.textContent = 'Failed to import CSV file. Please check the file format and try again.';
+            messageEl.textContent = 'Failed to import CSV file. CSV file has already been imported.';
             messageEl.className = 'message error';
             messageEl.style.display = 'block';
           }
