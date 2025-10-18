@@ -6,10 +6,244 @@
 <head>
 
   <meta charset="UTF-8">
-  <title>3D Truck Loader</title>
+  <title>Truck Loading Tetris</title>
   <style>
-    body { margin: 0; overflow: hidden; }
+    body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
     canvas { display: block; width: 100vw; height: 100vh; }
+
+    #ui-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      min-width: 280px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    #ui-panel.collapsed {
+      transform: translateX(calc(100% + 20px));
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #toggle-panel-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(76, 175, 80, 0.95);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      width: auto;
+      height: 35px;
+      padding: 8px 12px;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s, transform 0.3s;
+      z-index: 1000;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    #toggle-panel-btn:hover {
+      background: rgba(69, 160, 73, 0.95);
+      transform: scale(1.1);
+    }
+
+    #toggle-panel-btn.panel-open {
+      background: rgba(244, 67, 54, 0.95);
+    }
+
+    #toggle-panel-btn.panel-open:hover {
+      background: rgba(229, 57, 53, 0.95);
+    }
+
+    #ui-panel h2 {
+      margin: 0 0 15px 0;
+      font-size: 18px;
+      color: #333;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      color: #555;
+      font-weight: 500;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    button:active {
+      background: #3d8b40;
+    }
+
+    .message {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    #load-header {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 10px 14px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    #load-header h3 {
+      margin: 0;
+      font-size: 18px;
+      color: #333;
+    }
+
+    #switch-load-btn {
+      padding: 8px 12px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+      width: auto;
+    }
+
+    #switch-load-btn:hover {
+      background: #1976D2;
+    }
+
+    /* Confirmation Modal */
+    #confirm-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #confirm-modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 400px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .modal-content h3 {
+      margin: 0 0 20px 0;
+      color: #333;
+      font-size: 20px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .modal-confirm {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .modal-confirm:hover {
+      background: #45a049;
+    }
+
+    .modal-cancel {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .modal-cancel:hover {
+      background: #e0e0e0;
+    }
   </style>
    <script type="importmap">
   {
@@ -22,9 +256,91 @@
 </head>
 <body>
   <canvas id="scene"></canvas>
-  <p>Hey what's up</p>
+
+  <!-- Load Header -->
+  <div id="load-header">
+    <h3 id="load-name">{{ simulation.name }}</h3>
+    <button id="switch-load-btn" onclick="showConfirmModal()">Switch Load</button>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirm-modal">
+    <div class="modal-content">
+      <h3>Are you sure you want to switch loads?</h3>
+      <div class="modal-buttons">
+        <button class="modal-cancel" onclick="hideConfirmModal()">Cancel</button>
+        <button class="modal-confirm" onclick="confirmSwitchLoad()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toggle Button -->
+  <button id="toggle-panel-btn" title="Toggle Add Item Panel">Add New Item</button>
+
+  <!-- UI Panel for Adding Items -->
+  <div id="ui-panel" class="collapsed">
+    <h2>Add New Item</h2>
+    <form id="add-item-form">
+      <div class="form-group">
+        <label for="item-id">HU ID</label>
+        <input type="text" id="item-id" name="id" placeholder="Enter HU ID" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-weight">Weight (lbs)</label>
+        <input type="number" id="item-weight" name="weight" step="0.01" placeholder="Enter Weight" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-x-size">Length (in)</label>
+        <input type="number" id="item-x-size" name="x_size" step="0.1" placeholder="Enter Length" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-y-size">Width (in)</label>
+        <input type="number" id="item-y-size" name="y_size" step="0.1" placeholder="Enter Width" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-z-size">Height (in)</label>
+        <input type="number" id="item-z-size" name="z_size" step="0.1" placeholder="Enter Height" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-shipment">Shipment ID</label>
+        <input type="number" id="item-shipment" name="shipment" placeholder="Enter Shipment ID" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-stop">Stop</label>
+        <input type="text" id="item-stop" name="stop" maxlength="3" placeholder="Enter Stop" required>
+      </div>
+
+      <button type="submit">Add Item</button>
+      <div id="message" class="message"></div>
+    </form>
+  </div>
 
   <!-- Include Three.js and your script -->
+  <script>
+    // Set simulation ID for JavaScript
+    const SIMULATION_ID = "{% if simulation %}{{ simulation.id }}{% else %}null{% endif %}"
+
+    // Show confirmation modal
+    function showConfirmModal() {
+      document.getElementById('confirm-modal').classList.add('show');
+    }
+
+    // Hide confirmation modal
+    function hideConfirmModal() {
+      document.getElementById('confirm-modal').classList.remove('show');
+    }
+
+    // Confirm and switch loads
+    function confirmSwitchLoad() {
+      window.location.href = '/';
+    }
+  </script>
   <script type="module" src="{% static 'viewer/js/main.js' %}"></script>
 </body>
 </html>

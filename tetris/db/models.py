@@ -17,7 +17,8 @@ class Shipment(Model):
 
 
 class Simulation(Model):
-    time = DateTimeField()
+    name = CharField(max_length=128, default='Unnamed Load')
+    time = DateTimeField(auto_now_add=True)
 
 
 class HandlingUnit(Model):

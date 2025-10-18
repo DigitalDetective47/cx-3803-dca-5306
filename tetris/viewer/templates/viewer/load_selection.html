@@ -1,0 +1,425 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Truck Loading Tetris</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+      max-width: 800px;
+      width: 100%;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+
+    .create-section {
+      background: #f8f9fa;
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .create-section h2 {
+      color: #555;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    .create-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .create-form input[type="text"] {
+      padding: 12px 16px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    .create-form input[type="text"]:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-input-wrapper input[type=file] {
+      position: absolute;
+      left: -9999px;
+    }
+
+    .file-input-label {
+      display: block;
+      padding: 12px 16px;
+      background: #f8f9fa;
+      border: 2px dashed #ddd;
+      border-radius: 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .file-input-label:hover {
+      background: #e9ecef;
+      border-color: #4CAF50;
+    }
+
+    .file-selected {
+      background: #d4edda !important;
+      border-color: #4CAF50 !important;
+      color: #155724 !important;
+    }
+
+    .create-form button {
+      padding: 12px 24px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .create-form button:hover {
+      background: #45a049;
+    }
+
+    .loads-section {
+      position: relative;
+    }
+
+    .loads-section h2 {
+      color: #555;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    .loads-list-wrapper {
+      position: relative;
+    }
+
+    .loads-list {
+      display: grid;
+      gap: 15px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 5px;
+      transition: max-height 0.3s ease;
+    }
+
+    .loads-list.expanded {
+      max-height: none;
+    }
+
+    .loads-list::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .loads-list::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    .loads-list::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+
+    .loads-list::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    #expand-btn {
+      display: none;
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+      width: 100%;
+    }
+
+    #expand-btn:hover {
+      background: #1976D2;
+    }
+
+    #expand-btn.show {
+      display: block;
+    }
+
+    .load-item {
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .load-item:hover {
+      background: #e8f5e9;
+      border-color: #4CAF50;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+    }
+
+    .load-info h3 {
+      color: #333;
+      margin-bottom: 5px;
+      font-size: 18px;
+    }
+
+    .load-info p {
+      color: #666;
+      font-size: 13px;
+    }
+
+    .load-arrow {
+      color: #4CAF50;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .empty-state p {
+      font-size: 16px;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Truck Loading Tetris</h1>
+    <p class="subtitle">Select a load to view or create a new one</p>
+
+    <div id="message" class="message"></div>
+
+    <div class="create-section">
+      <h2>Create New Load</h2>
+      <form class="create-form" id="create-load-form">
+        <input type="text" id="load-name" name="name" placeholder="Enter Load Name" required>
+        <div class="file-input-wrapper">
+          <input type="file" id="csv-file" name="csv_file" accept=".csv">
+          <label for="csv-file" class="file-input-label" id="file-label">
+            Choose CSV File (Required)
+          </label>
+        </div>
+        <button type="submit">Create Load with CSV</button>
+      </form>
+    </div>
+
+    <div class="loads-section">
+      <h2>Saved Loads</h2>
+      <div class="loads-list-wrapper">
+        <div id="loads-list" class="loads-list">
+          <div class="empty-state">
+            <p>Loading...</p>
+          </div>
+        </div>
+        <button id="expand-btn" onclick="toggleExpand()">Expand All</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // File input visual feedback
+    document.getElementById('csv-file').addEventListener('change', function(e) {
+      const label = document.getElementById('file-label');
+      if (e.target.files.length > 0) {
+        label.textContent = '✓ ' + e.target.files[0].name;
+        label.classList.add('file-selected');
+      } else {
+        label.textContent = 'Choose CSV File (Required)';
+        label.classList.remove('file-selected');
+      }
+    });
+
+    // Expand/collapse toggle
+    let isExpanded = false;
+
+    function toggleExpand() {
+      const loadsList = document.getElementById('loads-list');
+      const expandBtn = document.getElementById('expand-btn');
+
+      isExpanded = !isExpanded;
+
+      if (isExpanded) {
+        loadsList.classList.add('expanded');
+        expandBtn.textContent = 'Collapse';
+      } else {
+        loadsList.classList.remove('expanded');
+        expandBtn.textContent = 'Expand All';
+      }
+    }
+
+    // Load existing loads
+    async function loadSimulations() {
+      try {
+        const response = await fetch('/api/get-simulations/');
+        const data = await response.json();
+
+        const loadsList = document.getElementById('loads-list');
+        const expandBtn = document.getElementById('expand-btn');
+
+        if (data.success && data.simulations.length > 0) {
+          loadsList.innerHTML = data.simulations.map(sim => `
+            <div class="load-item" onclick="window.location.href='/load/${sim.id}/'">
+              <div class="load-info">
+                <h3>${sim.name}</h3>
+                <p>Created: ${new Date(sim.time).toLocaleString()}</p>
+              </div>
+              <div class="load-arrow">→</div>
+            </div>
+          `).join('');
+
+          // Show expand button only if 4+ loads
+          if (data.simulations.length >= 4) {
+            expandBtn.classList.add('show');
+          } else {
+            expandBtn.classList.remove('show');
+          }
+        } else {
+          loadsList.innerHTML = '<div class="empty-state"><p>No loads yet. Create one above!</p></div>';
+          expandBtn.classList.remove('show');
+        }
+      } catch (error) {
+        console.error('Error loading simulations:', error);
+        document.getElementById('loads-list').innerHTML = '<div class="empty-state"><p>Error loading loads.</p></div>';
+        document.getElementById('expand-btn').classList.remove('show');
+      }
+    }
+
+    // Create new load with CSV
+    document.getElementById('create-load-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const loadName = document.getElementById('load-name').value;
+      const csvFile = document.getElementById('csv-file').files[0];
+      const messageEl = document.getElementById('message');
+
+      if (!csvFile) {
+        messageEl.textContent = 'Please select a CSV file';
+        messageEl.className = 'message error';
+        messageEl.style.display = 'block';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('name', loadName);
+      formData.append('csv_file', csvFile);
+
+      try {
+        const response = await fetch('/api/create-load-with-csv/', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // If no items were created, show error and stay on page
+          if (result.items_created === 0) {
+            messageEl.textContent = 'Failed to import CSV file. CSV file has already been imported.';
+            messageEl.className = 'message error';
+            messageEl.style.display = 'block';
+          }
+          // If items were imported, redirect immediately
+          else {
+            window.location.href = `/load/${result.simulation.id}/`;
+          }
+        } else {
+          messageEl.textContent = result.message;
+          messageEl.className = 'message error';
+          messageEl.style.display = 'block';
+        }
+      } catch (error) {
+        messageEl.textContent = 'Error creating load. Please try again.';
+        messageEl.className = 'message error';
+        messageEl.style.display = 'block';
+      }
+    });
+
+    // Load simulations on page load
+    loadSimulations();
+  </script>
+</body>
+</html>
