@@ -102,10 +102,16 @@ function addItemToScene(item) {
   return mesh;
 }
 
-// Function to load all existing items
+// Function to load all existing items for current simulation
 async function loadItems() {
   try {
-    const response = await fetch('/api/get-items/');
+    // Build URL with simulation filter if available
+    let url = '/api/get-items/';
+    if (typeof SIMULATION_ID !== 'undefined' && SIMULATION_ID !== null && SIMULATION_ID !== 'null') {
+      url += `?simulation_id=${SIMULATION_ID}`;
+    }
+
+    const response = await fetch(url);
     const data = await response.json();
 
     if (data.success) {
@@ -126,6 +132,11 @@ document.getElementById('add-item-form').addEventListener('submit', async (e) =>
 
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData.entries());
+
+  // Add simulation ID if available
+  if (typeof SIMULATION_ID !== 'undefined' && SIMULATION_ID !== null && SIMULATION_ID !== 'null') {
+    data.simulation_id = SIMULATION_ID;
+  }
 
   const messageEl = document.getElementById('message');
 
@@ -172,7 +183,7 @@ document.getElementById('add-item-form').addEventListener('submit', async (e) =>
 // Toggle panel functionality
 const toggleBtn = document.getElementById('toggle-panel-btn');
 const uiPanel = document.getElementById('ui-panel');
-let isPanelOpen = true;
+let isPanelOpen = false;
 
 toggleBtn.addEventListener('click', () => {
   isPanelOpen = !isPanelOpen;
@@ -189,7 +200,9 @@ toggleBtn.addEventListener('click', () => {
 });
 
 // Load existing items on page load
-loadItems();
+// TODO: Uncomment this when algorithm is ready to properly place items in the truck
+// Currently commented out to prevent items from scattering around the scene
+// loadItems();
 
 // Animation loop
 function animate() {
