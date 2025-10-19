@@ -5,7 +5,7 @@ from django.views.decorators.http import require_http_methods
 import json
 import csv
 import io
-from db.models import HandlingUnit, Shipment, Simulation
+from db.models import HandlingUnit, Shipment, Simulation, SimPlacement
 
 def load_selection(request):
     # Landing page showing all loads
@@ -70,6 +70,114 @@ def add_item(request):
             'success': False,
             'message': message
         }, status=400)
+    
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def set_sim_position(request):
+    """
+    Create or update a SimPlacement entry for an existing HandlingUnit.
+    Expected JSON payload:
+    {
+        "id": "HU123",
+        "simulation_id": 1,
+        "x": 12.3,
+        "y": 4.5,
+        "z": -6.7,
+        "orientation": "XYZ"   # optional
+    }
+    """
+    try:
+        data = json.loads(request.body)
+
+        hu_id = data.get("id")
+        sim_id = data.get("simulation_id")
+
+        if not hu_id or not sim_id:
+            return JsonResponse({
+                "success": False,
+                "message": "Missing Handling Unit ID or Simulation ID."
+            }, status=400)
+
+        # Check that the HU exists first
+        hu_exists = HandlingUnit.objects.filter(id=hu_id).exists()
+        if not hu_exists:
+            return JsonResponse({
+                "success": False,
+                "message": f"Cannot set position: Handling Unit ID '{hu_id}' does not exist."
+            }, status=400)
+
+        # Retrieve the actual instances
+        hu = HandlingUnit.objects.get(id=hu_id)
+        sim = get_object_or_404(Simulation, id=sim_id)
+
+        # Default orientation if none provided
+        orientation = data.get("orientation", "XYZ")
+
+        # Create or update placement
+        placement, created = SimPlacement.objects.update_or_create(
+            hu=hu,
+            sim=sim,
+            defaults={
+                "x": float(data.get("x_coord", 0)),
+                "y": float(data.get("y_coord", 0)),
+                "z": -float(data.get("z_coord", 0)),
+                "orientation": orientation,
+                "temp_remove": False
+            }
+        )
+
+        return JsonResponse({
+            "success": True,
+            "message": (
+                f"Position {'created' if created else 'updated'} "
+                f"for HU '{hu.id}' in simulation {sim.id}."
+            ),
+            "placement": {
+                "hu": hu.id,
+                "x": placement.x,
+                "y": placement.y,
+                "z": placement.z,
+                "orientation": str(placement.orientation),
+                "simulation_id": sim.id
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "message": f"Error setting position: {str(e)}"
+        }, status=400)
+
+
+
+
+def get_simplacements(request):
+    sim_id = request.GET.get('simulation_id')
+    if not sim_id:
+        return JsonResponse({'success': False, 'message': 'simulation_id required'})
+
+    placements = SimPlacement.objects.filter(sim_id=sim_id).select_related('hu')
+
+    data = []
+    for p in placements:
+        data.append({
+            # 'id': p.item.id,
+            'hu_id': p.hu_id,
+            'dest_x_coord': p.x,
+            'dest_y_coord': p.y,
+            'dest_z_coord': p.z,
+            # 'orientation': p.orientation,
+            # 'x_size': p.item.x_size,
+            # 'y_size': p.item.y_size,
+            # 'z_size': p.item.z_size,
+            # 'name': p.item.name,
+        })
+
+    return JsonResponse({'success': True, 'items': data})
+
+
 
 @require_http_methods(["GET"])
 def get_items(request):
