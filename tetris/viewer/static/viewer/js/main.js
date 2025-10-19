@@ -207,7 +207,6 @@ let selectedItem = null;
 renderer.domElement.addEventListener('click', (event) => {
   const rect = renderer.domElement.getBoundingClientRect();
 
-  // Normalize mouse coordinates
   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
@@ -216,22 +215,30 @@ renderer.domElement.addEventListener('click', (event) => {
   const intersects = raycaster.intersectObjects(Array.from(items.values()), true);
 
   if (intersects.length > 0) {
+    let mesh = intersects[0].object;
+    while (!items.has([...items].find(([id, m]) => m === mesh)?.[0])) {
+      mesh = mesh.parent;
+      if (!mesh) break;
+    }
+
+    if (!mesh) return;
+
     if (selectedItem && selectedItem.material?.emissive) {
       selectedItem.material.emissive.set(0x000000);
     }
 
-    selectedItem = intersects[0].object;
+    selectedItem = mesh;
     if (selectedItem.material?.emissive) {
       selectedItem.material.emissive.set(0x00ff00);
     }
 
+    console.log("Selected Item:", selectedItem.id || "(no id)");
   } else {
     if (selectedItem && selectedItem.material?.emissive) {
       selectedItem.material.emissive.set(0x000000);
     }
     selectedItem = null;
   }
-  console.log("Selected Item:", selectedItem.id || "(no id)");
 });
 
 
