@@ -54,12 +54,20 @@ const outline = new THREE.LineSegments(
 );
 truck.add(outline);
 
+const truckCenter = new THREE.Vector3(
+  TRUCK_LENGTH / 2,
+  TRUCK_HEIGHT / 2,
+  -TRUCK_WIDTH / 2
+);
+
 // Controls (click + drag)
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.maxPolarAngle = Math.PI / 2.1;
 controls.minDistance = 10;  
 controls.maxDistance = 100;
+controls.target.copy(truckCenter);
+controls.update();
 
 
 // Resize support
