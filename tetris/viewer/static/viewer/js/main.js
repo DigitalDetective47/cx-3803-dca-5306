@@ -199,10 +199,94 @@ toggleBtn.addEventListener('click', () => {
   }
 });
 
+// Click to select
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let selectedItem = null;
+
+renderer.domElement.addEventListener('click', (event) => {
+  const rect = renderer.domElement.getBoundingClientRect();
+
+  // Normalize mouse coordinates
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+
+  const intersects = raycaster.intersectObjects(Array.from(items.values()), true);
+
+  if (intersects.length > 0) {
+    if (selectedItem && selectedItem.material?.emissive) {
+      selectedItem.material.emissive.set(0x000000);
+    }
+
+    selectedItem = intersects[0].object;
+    if (selectedItem.material?.emissive) {
+      selectedItem.material.emissive.set(0x00ff00);
+    }
+
+  } else {
+    if (selectedItem && selectedItem.material?.emissive) {
+      selectedItem.material.emissive.set(0x000000);
+    }
+    selectedItem = null;
+  }
+  console.log("Selected Item:", selectedItem.id || "(no id)");
+});
+
+
+
+window.deleteSelectedItem = async function() {
+  try {
+    if (!selectedItem) {
+      throw new Error("No item selected");
+    }
+
+    // Get the item ID from your map
+    const itemId = [...items.entries()].find(([_, mesh]) => mesh === selectedItem)?.[0];
+    if (!itemId) {
+      throw new Error("Could not find item ID");
+    }
+
+    // Send delete request to backend
+    const response = await fetch(`/api/delete-item/${itemId}/`, {
+      method: 'DELETE'
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Remove from 3D scene
+      scene.remove(selectedItem);
+      items.delete(itemId);
+      selectedItem = null;
+      showUserMessage(result.message, "success");
+    } else {
+      showUserMessage(result.message || "Failed to delete item.", "error");
+    }
+
+  } catch (err) {
+    showUserMessage(err.message, "error");
+  } finally {
+    document.getElementById('delete-modal').classList.remove('show');
+  }
+};
+
+function showUserMessage(msg, type) {
+  const messageEl = document.getElementById('message');
+  messageEl.textContent = msg;
+  messageEl.className = `message ${type}`;
+  messageEl.style.display = "block";
+
+  setTimeout(() => {
+    messageEl.style.display = "none";
+  }, 4000);
+}
+
 // Load existing items on page load
 // TODO: Uncomment this when algorithm is ready to properly place items in the truck
 // Currently commented out to prevent items from scattering around the scene
-// loadItems();
+loadItems();
 
 // Animation loop
 function animate() {

@@ -266,3 +266,19 @@ def create_load_with_csv(request):
             'success': False,
             'message': f'Error creating load: {str(e)}'
         }, status=400)
+    
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_item(request, item_id):
+    try:
+        item = get_object_or_404(HandlingUnit, id=item_id)
+        item.delete()
+        return JsonResponse({
+            'success': True,
+            'message': f'Item {item_id} deleted successfully.'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error deleting item: {str(e)}'
+        }, status=400)
