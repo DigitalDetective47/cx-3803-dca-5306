@@ -396,13 +396,11 @@
         const result = await response.json();
 
         if (result.success) {
-          // If no items were created, show error and stay on page
           if (result.items_created === 0) {
             messageEl.textContent = 'Failed to import CSV file. CSV file has already been imported.';
             messageEl.className = 'message error';
             messageEl.style.display = 'block';
           }
-          // If items were imported, redirect immediately
           else {
             window.location.href = `/load/${result.simulation.id}/`;
           }
@@ -418,7 +416,6 @@
       }
     });
 
-    // Load simulations on page load
     loadSimulations();
   </script>
 </body>

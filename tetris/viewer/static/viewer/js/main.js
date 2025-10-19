@@ -71,10 +71,8 @@ window.addEventListener('resize', () => {
 
 // Function to add item to 3D scene
 function addItemToScene(item) {
-  // Random color for each item
   const color = new THREE.Color(Math.random(), Math.random(), Math.random());
 
-  // Create box geometry for the item
   const geometry = new THREE.BoxGeometry(item.x_size / 12, item.y_size / 12, item.z_size / 12);
   const material = new THREE.MeshStandardMaterial({
     color: color,
@@ -92,7 +90,7 @@ function addItemToScene(item) {
 
   mesh.position.set(offsetX, offsetY, offsetZ);
   mesh.userData.originalPos = mesh.position.clone();
-  // Add edges for better visibility
+  
   const edges = new THREE.EdgesGeometry(geometry);
   const outline = new THREE.LineSegments(
     edges,
@@ -108,10 +106,8 @@ function addItemToScene(item) {
 
 
 
-// Function to load all existing items for current simulation
 async function loadItems() {
   try {
-    // Build URL with simulation filter if available
     let url = '/api/get-items/';
     if (typeof SIMULATION_ID !== 'undefined' && SIMULATION_ID !== null && SIMULATION_ID !== 'null') {
       url += `?simulation_id=${SIMULATION_ID}`;
@@ -267,7 +263,6 @@ document.getElementById('add-item-form').addEventListener('submit', async (e) =>
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData.entries());
 
-  // Add simulation ID if available
   if (typeof SIMULATION_ID !== 'undefined' && SIMULATION_ID !== null && SIMULATION_ID !== 'null') {
     data.simulation_id = SIMULATION_ID;
   }
@@ -286,23 +281,18 @@ document.getElementById('add-item-form').addEventListener('submit', async (e) =>
     const result = await response.json();
 
     if (result.success) {
-      // Show success message
       messageEl.textContent = result.message;
       messageEl.className = 'message success';
       messageEl.style.display = 'block';
 
-      // Add item to 3D scene
       addItemToScene(result.item);
 
-      // Reset form
       e.target.reset();
 
-      // Hide message after 3 seconds
       setTimeout(() => {
         messageEl.style.display = 'none';
       }, 3000);
     } else {
-      // Show error message
       messageEl.textContent = result.message;
       messageEl.className = 'message error';
       messageEl.style.display = 'block';
@@ -339,7 +329,6 @@ document.getElementById('set-pos-form').addEventListener('submit', async (e) => 
 
 
 
-  // Add simulation ID if available
   if (typeof SIMULATION_ID !== 'undefined' && SIMULATION_ID !== null && SIMULATION_ID !== 'null') {
     data.simulation_id = SIMULATION_ID;
   }
@@ -358,7 +347,6 @@ document.getElementById('set-pos-form').addEventListener('submit', async (e) => 
     const result = await response.json();
 
     if (result.success) {
-      // Show success message
       messageEl.textContent = result.message;
       messageEl.className = 'message success';
       messageEl.style.display = 'block';
@@ -370,15 +358,12 @@ document.getElementById('set-pos-form').addEventListener('submit', async (e) => 
       //   mesh.position.set(item.x_pos, item.y_pos, item.z_pos);
       // }
 
-      // Reset form
       e.target.reset();
 
-      // Hide message after 3 seconds
       setTimeout(() => {
         messageEl.style.display = 'none';
       }, 3000);
     } else {
-      // Show error message
       messageEl.textContent = result.message;
       messageEl.className = 'message error';
       messageEl.style.display = 'block';
@@ -405,19 +390,16 @@ function togglePanel(btn, panel, otherBtn, otherPanel, label) {
   const isOpen = !panel.classList.contains('collapsed');
 
   if (isOpen) {
-    // Close current
     panel.classList.add('collapsed');
     btn.classList.remove('panel-open');
     btn.textContent = label;
     otherBtn.style.display = 'flex';
     animateBtn.style.display = 'flex';
   } else {
-    // Open current
     panel.classList.remove('collapsed');
     btn.classList.add('panel-open');
     btn.textContent = '×';
 
-    // Close the other panel if open
     otherPanel.classList.add('collapsed');
     otherBtn.classList.remove('panel-open');
     otherBtn.textContent = otherBtn.dataset.defaultLabel || otherBtn.textContent;
@@ -426,7 +408,6 @@ function togglePanel(btn, panel, otherBtn, otherPanel, label) {
   }
 }
 
-// Store default labels (for when reopening)
 addToggleBtn.dataset.defaultLabel = 'Add New Item';
 setPosToggleBtn.dataset.defaultLabel = 'Set Item Position';
 
@@ -439,7 +420,6 @@ setPosToggleBtn.addEventListener('click', () => {
   togglePanel(setPosToggleBtn, setPosPanel, addToggleBtn, addPanel, 'Set Item Position');
 });
 
-// Load existing items on page load
 loadItems();
 
 let isAnimating = false;

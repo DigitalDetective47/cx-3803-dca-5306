@@ -22,18 +22,15 @@ def add_item(request):
     try:
         data = json.loads(request.body)
 
-        # Get simulation if provided
         simulation = None
         if 'simulation_id' in data and data['simulation_id']:
             simulation = get_object_or_404(Simulation, id=data['simulation_id'])
 
-        # Get or create shipment
         shipment, created = Shipment.objects.get_or_create(
             id=data['shipment'],
             defaults={'name': f"Shipment {data['shipment']}"}
         )
 
-        # Create handling unit
         item = HandlingUnit.objects.create(
             id=data['id'],
             weight=float(data['weight']),
@@ -60,7 +57,6 @@ def add_item(request):
         })
     except Exception as e:
         error_message = str(e)
-        # Check for duplicate ID error
         if 'UNIQUE constraint failed' in error_message or 'already exists' in error_message:
             message = 'Error adding item. HU ID already exists.'
         else:
@@ -112,10 +108,8 @@ def set_sim_position(request):
         hu = HandlingUnit.objects.get(id=hu_id)
         sim = get_object_or_404(Simulation, id=sim_id)
 
-        # Default orientation if none provided
         orientation = data.get("orientation", "XYZ")
 
-        # Create or update placement
         placement, created = SimPlacement.objects.update_or_create(
             hu=hu,
             sim=sim,
@@ -184,7 +178,6 @@ def get_items(request):
     try:
         simulation_id = request.GET.get('simulation_id')
 
-        # Filter by simulation if provided
         if simulation_id:
             items = HandlingUnit.objects.filter(temp_add_id=simulation_id).values(
                 'id', 'weight', 'x_size', 'y_size', 'z_size', 'shipment', 'stop'
@@ -206,7 +199,6 @@ def get_items(request):
 
 @require_http_methods(["GET"])
 def get_simulations(request):
-    # Get all simulations/loads
     try:
         simulations = Simulation.objects.all().values('id', 'name', 'time').order_by('-time')
         return JsonResponse({
@@ -219,96 +211,92 @@ def get_simulations(request):
             'message': f'Error fetching simulations: {str(e)}'
         }, status=400)
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def create_load(request):
-    # Create a new load/simulation
-    try:
-        data = json.loads(request.body)
-        simulation = Simulation.objects.create(name=data['name'])
-        return JsonResponse({
-            'success': True,
-            'message': f'Load "{simulation.name}" created successfully!',
-            'simulation': {
-                'id': simulation.id,
-                'name': simulation.name,
-                'time': simulation.time.isoformat()
-            }
-        })
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'Error creating load: {str(e)}'
-        }, status=400)
+# Unused Function; commented out but kept for potential future use
+# @csrf_exempt
+# @require_http_methods(["POST"])
+# def create_load(request):
+#     try:
+#         data = json.loads(request.body)
+#         simulation = Simulation.objects.create(name=data['name'])
+#         return JsonResponse({
+#             'success': True,
+#             'message': f'Load "{simulation.name}" created successfully!',
+#             'simulation': {
+#                 'id': simulation.id,
+#                 'name': simulation.name,
+#                 'time': simulation.time.isoformat()
+#             }
+#         })
+#     except Exception as e:
+#         return JsonResponse({
+#             'success': False,
+#             'message': f'Error creating load: {str(e)}'
+#         }, status=400)
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def import_csv(request):
-    # Import items from CSV file
-    try:
-        simulation_id = request.POST.get('simulation_id')
-        csv_file = request.FILES.get('csv_file')
+# Unused Function; commented out but kept for potential future use
+# @csrf_exempt
+# @require_http_methods(["POST"])
+# def import_csv(request):
+#     try:
+#         simulation_id = request.POST.get('simulation_id')
+#         csv_file = request.FILES.get('csv_file')
 
-        if not csv_file:
-            return JsonResponse({
-                'success': False,
-                'message': 'No CSV file provided'
-            }, status=400)
+#         if not csv_file:
+#             return JsonResponse({
+#                 'success': False,
+#                 'message': 'No CSV file provided'
+#             }, status=400)
 
-        if not simulation_id:
-            return JsonResponse({
-                'success': False,
-                'message': 'No simulation ID provided'
-            }, status=400)
+#         if not simulation_id:
+#             return JsonResponse({
+#                 'success': False,
+#                 'message': 'No simulation ID provided'
+#             }, status=400)
 
-        simulation = get_object_or_404(Simulation, id=simulation_id)
+#         simulation = get_object_or_404(Simulation, id=simulation_id)
 
-        # Read and parse CSV (handle BOM)
-        csv_data = csv_file.read().decode('utf-8-sig')  # utf-8-sig removes BOM
-        csv_reader = csv.DictReader(io.StringIO(csv_data))
+#         csv_data = csv_file.read().decode('utf-8-sig')  # utf-8-sig removes BOM
+#         csv_reader = csv.DictReader(io.StringIO(csv_data))
 
-        items_created = 0
-        errors = []
+#         items_created = 0
+#         errors = []
 
-        for row in csv_reader:
-            try:
-                # Get or create shipment
-                shipment, _ = Shipment.objects.get_or_create(
-                    id=int(row['Shipment']),
-                    defaults={'name': f"Shipment {row['Shipment']}"}
-                )
+#         for row in csv_reader:
+#             try:
+#                 shipment, _ = Shipment.objects.get_or_create(
+#                     id=int(row['Shipment']),
+#                     defaults={'name': f"Shipment {row['Shipment']}"}
+#                 )
 
-                # Create handling unit
-                HandlingUnit.objects.create(
-                    id=row['HU Number'],
-                    weight=float(row['Gross Weight']),
-                    x_size=float(row['Length']),
-                    y_size=float(row['Width']),
-                    z_size=float(row['Height']),
-                    shipment=shipment,
-                    stop=row['Stop'],
-                    temp_add=simulation
-                )
-                items_created += 1
-            except Exception as e:
-                errors.append(f"Row {row.get('HU Number', 'unknown')}: {str(e)}")
+#                 HandlingUnit.objects.create(
+#                     id=row['HU Number'],
+#                     weight=float(row['Gross Weight']),
+#                     x_size=float(row['Length']),
+#                     y_size=float(row['Width']),
+#                     z_size=float(row['Height']),
+#                     shipment=shipment,
+#                     stop=row['Stop'],
+#                     temp_add=simulation
+#                 )
+#                 items_created += 1
+#             except Exception as e:
+#                 errors.append(f"Row {row.get('HU Number', 'unknown')}: {str(e)}")
 
-        return JsonResponse({
-            'success': True,
-            'message': f'Successfully imported {items_created} items',
-            'items_created': items_created,
-            'errors': errors
-        })
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'Error importing CSV: {str(e)}'
-        }, status=400)
+#         return JsonResponse({
+#             'success': True,
+#             'message': f'Successfully imported {items_created} items',
+#             'items_created': items_created,
+#             'errors': errors
+#         })
+#     except Exception as e:
+#         return JsonResponse({
+#             'success': False,
+#             'message': f'Error importing CSV: {str(e)}'
+#         }, status=400)
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def create_load_with_csv(request):
-    # Create a new load and import CSV items in one operation
     try:
         load_name = request.POST.get('name')
         csv_file = request.FILES.get('csv_file')
@@ -325,10 +313,8 @@ def create_load_with_csv(request):
                 'message': 'No CSV file provided'
             }, status=400)
 
-        # Create simulation
         simulation = Simulation.objects.create(name=load_name)
 
-        # Read and parse CSV (handle BOM)
         csv_data = csv_file.read().decode('utf-8-sig')  # utf-8-sig removes BOM
         csv_reader = csv.DictReader(io.StringIO(csv_data))
 
@@ -337,13 +323,11 @@ def create_load_with_csv(request):
 
         for row in csv_reader:
             try:
-                # Get or create shipment
                 shipment, _ = Shipment.objects.get_or_create(
                     id=int(row['Shipment']),
                     defaults={'name': f"Shipment {row['Shipment']}"}
                 )
 
-                # Create handling unit
                 HandlingUnit.objects.create(
                     id=row['HU Number'],
                     weight=float(row['Gross Weight']),
