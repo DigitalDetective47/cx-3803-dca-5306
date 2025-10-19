@@ -18,6 +18,7 @@ class Shipment(Model):
 
 class Simulation(Model):
     name = CharField(max_length=128, default='Unnamed Load')
+    shipment = ForeignKey(Shipment, CASCADE)
     time = DateTimeField(auto_now_add=True)
 
 
