@@ -84,11 +84,10 @@ function addItemToScene(item) {
 
   const mesh = new THREE.Mesh(geometry, material);
 
-  // Position items outside the trailer (floating, waiting for simulation)
-  // Items will be arranged next to the truck
+  // Position items outside the trailer
   const existingItemsCount = items.size;
-  const offsetX = 1.5 * TRUCK_LENGTH + (existingItemsCount % 3) * 8;  // Next to truck
-  const offsetY = item.y_size / 2 + 2;  // Slightly elevated
+  const offsetX = 1.5 * TRUCK_LENGTH + (existingItemsCount % 3) * 8; 
+  const offsetY = item.y_size / 2 + 2; 
   const offsetZ = Math.floor(existingItemsCount / 3) * 6 - 6;
 
   mesh.position.set(offsetX, offsetY, offsetZ);
@@ -441,10 +440,7 @@ setPosToggleBtn.addEventListener('click', () => {
 });
 
 // Load existing items on page load
-// TODO: Uncomment this when algorithm is ready to properly place items in the truck
-// Currently commented out to prevent items from scattering around the scene
 loadItems();
-
 
 let isAnimating = false;
 let isResetMode = false
