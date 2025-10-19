@@ -17,6 +17,7 @@ class Shipment(Model):
 
 
 class Simulation(Model):
+    shipment = ForeignKey(Shipment, CASCADE)
     time = DateTimeField()
 
 
