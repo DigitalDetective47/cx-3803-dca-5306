@@ -67,5 +67,13 @@ class RotationField(Field):
             return value
         return Rotation(value)
 
-    def get_prep_value(self, value: Rotation) -> str:
+    def get_prep_value(self, value: Rotation | str | None) -> str:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return value
         return value.value
+    
+    def db_type(self, connection):
+        # Tell Django to use a varchar(3) column in SQLite
+        return "varchar(3)"

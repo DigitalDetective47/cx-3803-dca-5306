@@ -11,6 +11,29 @@
     body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
     canvas { display: block; width: 100vw; height: 100vh; }
 
+
+    #animate-btn {
+      position: absolute;
+      top: 130px;      
+      right: 20px;
+      z-index: 1000;
+      background: #FF9800;
+      color: white;
+      width: auto;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    #animate-btn:hover {
+      background: #FB8C00;
+    }
+
+
     #ui-panel {
       position: absolute;
       top: 20px;
@@ -25,16 +48,30 @@
       transition: transform 0.3s ease, opacity 0.3s ease;
     }
 
-    #ui-panel.collapsed {
+    #set-pos-ui-panel {
+      position: absolute;
+      top: 70px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      min-width: 280px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    
+
+    .collapsed {
       transform: translateX(calc(100% + 20px));
       opacity: 0;
       pointer-events: none;
     }
 
-    #toggle-panel-btn {
+    .toggle-panel-btn {
       position: absolute;
-      top: 20px;
-      right: 20px;
       background: rgba(76, 175, 80, 0.95);
       color: white;
       border: none;
@@ -54,20 +91,36 @@
       line-height: 1;
     }
 
-    #toggle-panel-btn:hover {
+    .toggle-panel-btn:hover {
       background: rgba(69, 160, 73, 0.95);
       transform: scale(1.1);
     }
 
-    #toggle-panel-btn.panel-open {
+    .toggle-panel-btn.panel-open {
       background: rgba(244, 67, 54, 0.95);
     }
 
-    #toggle-panel-btn.panel-open:hover {
+    .toggle-panel-btn.panel-open:hover {
       background: rgba(229, 57, 53, 0.95);
     }
 
+    #add-toggle-panel-btn {
+      top: 20px;
+      right: 20px;
+    }
+
+    #set-pos-toggle-btn {
+      top: 70px; 
+      right: 20px;
+    }
+
     #ui-panel h2 {
+      margin: 0 0 15px 0;
+      font-size: 18px;
+      color: #333;
+    }
+
+    #set-pos-ui-panel h2 {
       margin: 0 0 15px 0;
       font-size: 18px;
       color: #333;
@@ -380,7 +433,7 @@
   </div>
 
   <!-- Toggle Button -->
-  <button id="toggle-panel-btn" title="Toggle Add Item Panel">Add New Item</button>
+  <button id="add-toggle-panel-btn" class="toggle-panel-btn" title="Toggle Add Item Panel">Add New Item</button>
   <button id ="delete-item-btn" onclick="showDeleteModal()">Delete Selected Item</button>
 
   <!-- UI Panel for Adding Items -->
@@ -427,7 +480,45 @@
     </form>
   </div>
 
-  <!-- Include Three.js and your script -->
+  <!-- UI Panel for Setting Position of Items -->
+  <button id="set-pos-toggle-btn" class="toggle-panel-btn" title="Toggle Set Position Panel">Set Item Position</button>
+  <div id="set-pos-ui-panel" class="collapsed">
+    <h2>Set Position</h2>
+    <form id="set-pos-form">
+      <div class="form-group">
+        <label for="pos-item-id">HU ID</label>
+        <input type="text" id="pos-item-id" name="id" placeholder="Enter HU ID" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-x-coord">X Coordinate</label>
+        <input type="number" id="item-x-coord" name="x_coord" step="0.1" placeholder="Enter X Coordinate" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-y-coord">Y Coordinate</label>
+        <input type="number" id="item-y-coord" name="y_coord" step="0.1" placeholder="Enter Y Coordinate" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-z-coord">Z Coordinate</label>
+        <input type="number" id="item-z-coord" name="z_coord" step="0.1" placeholder="Enter Z Coordinate" required>
+      </div>
+
+      <div class="form-group">
+        <label for="item-orientation">Orientation</label>
+        <input type="text" id="item-orientation" name="orientation" step="0.1" placeholder="Enter Orientation (ie 'XYZ', 'ZXY', etc)">
+      </div>
+
+      <button type="submit">Set Position</button>
+      <div id="set-pos-message" class="message"></div>
+    </form>
+  </div>
+
+
+  <button id="animate-btn">Animate</button>
+
+  <!-- Include Three.js and script -->
   <script>
     // Set simulation ID for JavaScript
     const SIMULATION_ID = "{% if simulation %}{{ simulation.id }}{% else %}null{% endif %}"
