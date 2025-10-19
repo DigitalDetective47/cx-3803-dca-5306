@@ -249,7 +249,7 @@ window.deleteSelectedItem = async function() {
       throw new Error("No item selected");
     }
 
-    // Get the item ID from your map
+    // Get the item ID from current map
     const itemId = [...items.entries()].find(([_, mesh]) => mesh === selectedItem)?.[0];
     if (!itemId) {
       throw new Error("Could not find item ID");
@@ -280,13 +280,13 @@ window.deleteSelectedItem = async function() {
 };
 
 function showUserMessage(msg, type) {
-  const messageEl = document.getElementById('message');
-  messageEl.textContent = msg;
-  messageEl.className = `message ${type}`;
-  messageEl.style.display = "block";
+  const globalMessageEl = document.getElementById('global-message');
+  globalMessageEl.textContent = msg;
+  globalMessageEl.className = `global-message ${type}`;
+  globalMessageEl.style.display = "block";
 
   setTimeout(() => {
-    messageEl.style.display = "none";
+    globalMessageEl.style.display = "none";
   }, 4000);
 }
 
