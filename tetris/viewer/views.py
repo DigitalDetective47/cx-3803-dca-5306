@@ -313,7 +313,6 @@ def create_load_with_csv(request):
                 'message': 'No CSV file provided'
             }, status=400)
 
-        simulation = Simulation.objects.create(name=load_name)
 
         csv_data = csv_file.read().decode('utf-8-sig')  # utf-8-sig removes BOM
         csv_reader = csv.DictReader(io.StringIO(csv_data))
@@ -327,6 +326,8 @@ def create_load_with_csv(request):
                     id=int(row['Shipment']),
                     defaults={'name': f"Shipment {row['Shipment']}"}
                 )
+
+                simulation, _ = Simulation.objects.get_or_create(name=load_name, shipment=shipment)
 
                 HandlingUnit.objects.create(
                     id=row['HU Number'],
