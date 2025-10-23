@@ -1,11 +1,13 @@
 from django.db.models import (
     CASCADE,
+    BooleanField,
     CharField,
     DateTimeField,
     FloatField,
     ForeignKey,
     Model,
-    PositiveBigIntegerField,BooleanField
+    PositiveBigIntegerField,
+    UniqueConstraint,
 )
 
 from .rotation import Rotation, RotationField
@@ -17,7 +19,7 @@ class Shipment(Model):
 
 
 class Simulation(Model):
-    name = CharField(max_length=128, default='Unnamed Load')
+    name = CharField(max_length=128, default="Unnamed Load")
     shipment = ForeignKey(Shipment, CASCADE)
     time = DateTimeField(auto_now_add=True)
 
@@ -41,3 +43,8 @@ class SimPlacement(Model):
     orientation = RotationField(default=Rotation.XYZ)
     sim = ForeignKey(Simulation, CASCADE)
     temp_remove = BooleanField(default=False)
+
+    class Meta:
+        constraints = (
+            UniqueConstraint(fields=("hu", "sim"), name="shrodingers_placement"),
+        )
