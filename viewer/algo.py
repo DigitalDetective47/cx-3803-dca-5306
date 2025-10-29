@@ -1,10 +1,13 @@
 from collections.abc import MutableSet
+from numbers import Real
 from types import NotImplementedType
-from typing import Any, Final, Optional, Self, SupportsFloat
+from typing import Any, Final, Generic, Optional, Self, TypeVar
 
 from django.db.models import Q
 
 from db.models import HandlingUnit, SimPlacement, Simulation
+
+N = TypeVar("N", bound=Real)
 
 
 def compute_layout(sim: Simulation, /) -> None:
@@ -21,26 +24,28 @@ def compute_layout(sim: Simulation, /) -> None:
         base_x = compute_stop(sim, stop, base_x)
 
 
-class Interval:
+class Interval(Generic[N]):
     __slots__ = ("_max", "_min")
     __match_args__ = ("min", "max")
 
-    _min: Final[float]
-    _max: Final[float]
+    _min: N
+    _max: N
 
-    def __init__(self, low: float, high: float, /) -> None:
+    def __init__(self, low: N, high: N, /) -> None:
+        if low == high:
+            raise ValueError("Intervals of measure 0 is not allowed")
         self._min = min(low, high)
         self._max = max(low, high)
 
-    def __and__(self, other: Interval, /) -> Optional[Interval]:
+    def __and__(self, other: Interval[N], /) -> Optional[Interval[N]]:
         "Returns None if the intervals have no intersection."
         if not isinstance(other, Interval):
             return NotImplemented
-        low: Final[float] = max(self.min, other.min)
-        high: Final[float] = min(self.max, other.max)
+        low: Final[N] = max(self.min, other.min)
+        high: Final[N] = min(self.max, other.max)
         if low >= high:
             return None
-        ret: Final[Interval] = Interval(low, high)
+        ret: Final[Interval[N]] = Interval(low, high)
         if ret == self:
             return self
         elif ret == other:
@@ -49,9 +54,10 @@ class Interval:
             return ret
 
     def __contains__(self, other: Any, /) -> bool:
-        if not isinstance(other, SupportsFloat):
+        try:
+            return self.min <= other < self.max
+        except TypeError:
             return False
-        return self.min <= float(other) < self.max
 
     def __copy__(self) -> Self:
         return self
@@ -67,23 +73,23 @@ class Interval:
         return hash((self.min, self.max))
 
     @property
-    def max(self) -> float:
+    def max(self) -> N:
         return self._max
 
-    def measure(self) -> float:
-        return self.max - self.min
+    def measure(self) -> N:
+        return self.max - self.min  # type:ignore[return-value]
 
     @property
-    def min(self) -> float:
+    def min(self) -> N:
         return self._min
 
-    def __or__(self, other: Interval, /) -> Optional[Interval]:
+    def __or__(self, other: Interval, /) -> Optional[Interval[N]]:
         "Returns None if the intervals have an unconnected union."
         if not isinstance(other, Interval):
             return NotImplemented
         if self.min > other.max or other.min > self.max:
             return None
-        ret: Final[Interval] = Interval(
+        ret: Final[Interval[N]] = Interval(
             min(self.min, other.min), max(self.max, other.max)
         )
         if ret == self:
