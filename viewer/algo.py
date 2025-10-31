@@ -110,6 +110,9 @@ class Interval(Generic[N]):
 
 
 class Mosaic(Generic[N, T]):
+    class RangeError(LookupError):
+        "Location lookup within a Mosaic is out of range."
+
     __slots__ = ("_grid_contents", "_x_boundaries", "_y_boundaries")
 
     _grid_contents: list[list[T]]
@@ -146,7 +149,7 @@ class Mosaic(Generic[N, T]):
         right: int = len(intervals)
         middle: int
         if find not in Interval(intervals[0].min, intervals[-1].max):
-            raise ValueError("Find target out of range")
+            raise Mosaic.RangeError("Find target out of range")
         while left != right:
             middle = (left + right) // 2
             if find in intervals[middle]:
@@ -155,7 +158,7 @@ class Mosaic(Generic[N, T]):
                 right = middle
             else:
                 left = middle + 1
-        raise LookupError(
+        raise Exception(
             "Search location is between intervals. These intervals are likely corrupted."
         )
 
@@ -173,6 +176,24 @@ class Mosaic(Generic[N, T]):
         ret._y_boundaries = copy(self._y_boundaries)
         return ret
 
+    def fuse(self) -> None:
+        "Merge identical & adjacent rows/columns to reduce memory usage."
+        i: int = 0
+        while i < len(self.x_intervals):
+            if self._grid_contents[i] == self._grid_contents[i + 1]:
+                del self._grid_contents[i + 1]
+                del self._x_boundaries[i + 1]
+            else:
+                i += 1
+        i = 0
+        while i < len(self.y_intervals):
+            if all(column[i] == column[i + 1] for column in self._grid_contents):
+                for column in self._grid_contents:
+                    del column[i + 1]
+                del self._y_boundaries[i + 1]
+            else:
+                i += 1
+
     @overload
     def __getitem__(self, key: tuple[N, N], /) -> T:
         pass
@@ -187,7 +208,7 @@ class Mosaic(Generic[N, T]):
         "When called over a range, this returns a **copy**, not a **view**."
         if isinstance(key[0], Interval):
             if key[0] & self.x_range != key[0] or key[1] & self.y_range != key[1]:
-                raise ValueError(
+                raise self.RangeError(
                     "Specified range extends beyond the edge of the Mosaic."
                 )
             ret: Final[Mosaic[N, T]] = copy(self)
@@ -205,6 +226,16 @@ class Mosaic(Generic[N, T]):
 
     def __len__(self) -> int:
         return (len(self._x_boundaries) + 1) * (len(self._y_boundaries) + 1)
+
+    def overlay(self, other: Mosaic[N, T], /) -> None:
+        "Replace contents of this mosaic with the contents of other where they overlap. Raises a `RangeError` if `other` is not completely inside `self`."
+        if (
+            self.x_range | other.x_range != self.x_range
+            or self.y_range | other.y_range != self.y_range
+        ):
+            raise self.RangeError("overlay Mosaic out of range")
+        for x, y in product(other.x_intervals, other.y_intervals):
+            self[x, y] = other[x.min, y.min]
 
     def __setitem__(self, key: tuple[Interval[N], Interval[N]], value: T, /) -> None:
         try:
