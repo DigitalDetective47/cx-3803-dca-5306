@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Any, Final, Generic, Optional, Self, TypeVar, 
 
 from django.db.models import Q
 
-from db.models import HandlingUnit, SimPlacement, Simulation
-from db.rotation import Rotation
+from .models import HandlingUnit, SimPlacement, Simulation
+from .rotation import Rotation
 
 if TYPE_CHECKING:
     from _typeshed import SupportsAllComparisons
