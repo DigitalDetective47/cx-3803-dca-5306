@@ -8,6 +8,7 @@ from typing import Any, Final, Generic, Optional, Self, TypeVar, overload
 from django.db.models import Q
 
 from db.models import HandlingUnit, SimPlacement, Simulation
+from db.rotation import Rotation
 
 N = TypeVar("N", bound=Real)
 T = TypeVar("T")
@@ -354,14 +355,48 @@ class Mosaic(Generic[N, T]):
 
 
 def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
+    heightmap: Final[Mosaic[float, float]] = Mosaic(  # type:ignore[type-var]
+        0,
+        Interval(starting_x, 53.0 * 12),  # type:ignore[type-var]
+        Interval(-9.0 * 12, 0),  # type:ignore[type-var]
+    )  # type:ignore[type-var]
     for hu in HandlingUnit.objects.filter(
         Q(temp_add=sim) | Q(temp_add__isnull=True), shipment=sim.shipment, stop=stop
     ).order_by("-weight"):
         placement, _ = SimPlacement.objects.get_or_create(
             hu=hu, sim=sim, defaults={"x": 0, "y": 0, "z": 0}
         )
-        if not placement.temp_remove:
-            placement.x = starting_x
-            placement.y = 0
-            placement.z = 0
+        for x, z, rot in product(
+            heightmap.x_intervals, heightmap.y_intervals, Rotation
+        ):
+            effective_size: tuple[float, float, float] = rot.apply(
+                (hu.x_size, hu.y_size, hu.z_size)
+            )
+            submap: Mosaic[float, float] = (  # type:ignore[type-var]
+                heightmap[  # type:ignore[assignment]
+                    Interval(
+                        x.min, x.min + effective_size[0]
+                    ),  # type:ignore[index, type-var]
+                    Interval(
+                        z.min, z.min + effective_size[2]
+                    ),  # type:ignore[index, type-var]
+                ]
+            )
+            submap.fuse()
+            if (
+                len(submap) == 1
+                and submap[x.min, z.min] + effective_size[1] <= 8.5 * 12
+            ):
+                placement.x = x.min
+                placement.x = z.min
+                placement.y = heightmap[x.min, z.min]
+                heightmap[
+                    Interval(x.min, x.min + effective_size[0]),  # type:ignore[type-var]
+                    Interval(z.min, z.min + effective_size[2]),  # type:ignore[type-var]
+                ] = (
+                    placement.y + effective_size[1]
+                )
+                break
+        else:
+            raise ValueError("Could not fit all items!")
     return starting_x
