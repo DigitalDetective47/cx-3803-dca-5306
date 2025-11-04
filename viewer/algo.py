@@ -1,4 +1,4 @@
-from db.models import HandlingUnit, SimPlacement, Simulation
+from .models import HandlingUnit, SimPlacement, Simulation
 
 
 def compute_layout(sim: Simulation, /) -> None:
