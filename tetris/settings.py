@@ -19,8 +19,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-fpp=cox!yz7um#6=d)vy9jfbe-spek#c6w^o+wll_5svc_*j1s"
+try:
+    from base64 import urlsafe_b64encode
+    with open(BASE_DIR/"secret.key", "rb") as f:
+        SECRET_KEY = urlsafe_b64encode(f.read())
+except FileNotFoundError:
+    from secrets import token_bytes
+    key = token_bytes()
+    SECRET_KEY = urlsafe_b64encode(key)
+    with open(BASE_DIR/"secret.key", "xb") as f:
+        f.write(key)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
