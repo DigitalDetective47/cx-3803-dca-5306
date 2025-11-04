@@ -1,16 +1,18 @@
 from collections.abc import Iterator, MutableSet, Sequence
 from copy import copy
 from itertools import chain, pairwise, product
-from numbers import Real
 from types import NotImplementedType
-from typing import Any, Final, Generic, Optional, Self, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Final, Generic, Optional, Self, TypeVar, overload
 
 from django.db.models import Q
 
 from db.models import HandlingUnit, SimPlacement, Simulation
 from db.rotation import Rotation
 
-N = TypeVar("N", bound=Real)
+if TYPE_CHECKING:
+    from _typeshed import SupportsAllComparisons
+
+N = TypeVar("N", bound=SupportsAllComparisons)
 T = TypeVar("T")
 
 
@@ -79,9 +81,6 @@ class Interval(Generic[N]):
     @property
     def max(self) -> N:
         return self._max
-
-    def measure(self) -> N:
-        return self.max - self.min  # type:ignore[return-value]
 
     @property
     def min(self) -> N:
@@ -266,15 +265,6 @@ class Mosaic(Generic[N, T]):
         ):
             self._grid_contents[x_index][y_index] = value
 
-    def shift(self, /, dx: Optional[N] = None, dy: Optional[N] = None) -> None:
-        "Offset the indices of this Mosaic by the specified amount. Default value is no shift."
-        if dx is not None:
-            for i in range(len(self._x_boundaries)):
-                self._x_boundaries[i] += dx  # type:ignore[call-overload]
-        if dy is not None:
-            for i in range(len(self._y_boundaries)):
-                self._y_boundaries[i] += dy  # type:ignore[call-overload]
-
     def slice_x(self, x: N, /) -> Interval[N]:
         "Returns the interval that was divided. Raises a ValueError if the Mosaic is already divided at the specified x coordinate."
         interval_index: Final[int] = self._interval_index_helper(self.x_intervals, x)
@@ -355,11 +345,9 @@ class Mosaic(Generic[N, T]):
 
 
 def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
-    heightmap: Final[Mosaic[float, float]] = Mosaic(  # type:ignore[type-var]
-        0,
-        Interval(starting_x, 53.0 * 12),  # type:ignore[type-var]
-        Interval(-9.0 * 12, 0),  # type:ignore[type-var]
-    )  # type:ignore[type-var]
+    heightmap: Final[Mosaic[float, float]] = Mosaic(
+        0, Interval(starting_x, 53.0 * 12), Interval(-9.0 * 12, 0)
+    )
     for hu in HandlingUnit.objects.filter(
         Q(temp_add=sim) | Q(temp_add__isnull=True), shipment=sim.shipment, stop=stop
     ).order_by("-weight"):
@@ -372,16 +360,10 @@ def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
             effective_size: tuple[float, float, float] = rot.apply(
                 (hu.x_size, hu.y_size, hu.z_size)
             )
-            submap: Mosaic[float, float] = (  # type:ignore[type-var]
-                heightmap[  # type:ignore[assignment]
-                    Interval(
-                        x.min, x.min + effective_size[0]
-                    ),  # type:ignore[index, type-var]
-                    Interval(
-                        z.min, z.min + effective_size[2]
-                    ),  # type:ignore[index, type-var]
-                ]
-            )
+            submap: Mosaic[float, float] = heightmap[
+                Interval(x.min, x.min + effective_size[0]),
+                Interval(z.min, z.min + effective_size[2]),
+            ]
             submap.fuse()
             if (
                 len(submap) == 1
@@ -391,8 +373,8 @@ def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
                 placement.x = z.min
                 placement.y = heightmap[x.min, z.min]
                 heightmap[
-                    Interval(x.min, x.min + effective_size[0]),  # type:ignore[type-var]
-                    Interval(z.min, z.min + effective_size[2]),  # type:ignore[type-var]
+                    Interval(x.min, x.min + effective_size[0]),
+                    Interval(z.min, z.min + effective_size[2]),
                 ] = (
                     placement.y + effective_size[1]
                 )
