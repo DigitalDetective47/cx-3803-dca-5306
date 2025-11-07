@@ -17,6 +17,20 @@ def load_view(request, simulation_id):
     return render(request, 'viewer/index.html', {'simulation': simulation})
 
 @csrf_exempt
+def delete_load(request, load_id):
+    if request.method != "DELETE":
+        return JsonResponse({"success": False, "message": "Invalid request method"}, status=405)
+
+    try:
+        load = Simulation.objects.get(id=load_id)
+        load.delete()
+        return JsonResponse({"success": True, "message": "Load deleted successfully."})
+    except Simulation.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Load not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+@csrf_exempt
 @require_http_methods(["POST"])
 def add_item(request):
     try:

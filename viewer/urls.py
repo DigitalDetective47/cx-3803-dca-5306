@@ -13,4 +13,5 @@ urlpatterns = [
     path('api/get-simplacements/', views.get_simplacements, name='get-simplacements'),
     # path('api/import-csv/', views.import_csv, name='import_csv'),
     path('api/delete-item/<str:item_id>/', views.delete_item, name='delete-item'),
+    path("api/delete-load/<int:load_id>/", views.delete_load, name="delete_load"),
 ]
