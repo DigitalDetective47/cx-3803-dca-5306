@@ -5,7 +5,7 @@ from django.views.decorators.http import require_http_methods
 import json
 import csv
 import io
-from db.models import HandlingUnit, Shipment, Simulation, SimPlacement
+from .models import HandlingUnit, Shipment, Simulation, SimPlacement
 
 def load_selection(request):
     # Landing page showing all loads
