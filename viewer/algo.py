@@ -11,6 +11,8 @@ from .rotation import Rotation
 
 if TYPE_CHECKING:
     from _typeshed import SupportsAllComparisons
+else:
+    SupportsAllComparisons = Any
 
 N = TypeVar("N", bound=SupportsAllComparisons)
 T = TypeVar("T")
