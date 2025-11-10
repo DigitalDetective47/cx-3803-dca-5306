@@ -372,6 +372,7 @@ def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
                 placement.x = x.min
                 placement.x = z.min
                 placement.y = heightmap[x.min, z.min]
+                placement.orientation = rot
                 heightmap[
                     Interval(x.min, x.min + effective_size[0]),
                     Interval(z.min, z.min + effective_size[2]),
@@ -381,4 +382,5 @@ def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
                 break
         else:
             raise ValueError("Could not fit all items!")
+        placement.save()
     return starting_x
