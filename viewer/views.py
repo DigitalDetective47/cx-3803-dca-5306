@@ -6,6 +6,7 @@ import json
 import csv
 import io
 from .models import HandlingUnit, Shipment, Simulation, SimPlacement
+from .algo import compute_layout
 
 def load_selection(request):
     # Landing page showing all loads
@@ -14,6 +15,7 @@ def load_selection(request):
 def load_view(request, simulation_id):
     # 3D viewer for a specific load
     simulation = get_object_or_404(Simulation, id=simulation_id)
+    compute_layout(simulation)
     return render(request, 'viewer/index.html', {'simulation': simulation})
 
 @csrf_exempt
