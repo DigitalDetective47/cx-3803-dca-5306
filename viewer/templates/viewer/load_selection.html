@@ -264,6 +264,97 @@
       color: #721c24;
       border: 1px solid #f5c6cb;
     }
+
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 400px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .modal-content h3 {
+      margin: 0 0 20px 0;
+      color: #333;
+      font-size: 20px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    /* Delete modal */
+    .delete-btn {
+      background: transparent;
+      border: none;
+      color: #f44336;
+      font-size: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .delete-btn:hover {
+      color: #d32f2f;
+    }
+    .modal-delete-confirm {
+      background: #f44336;
+      color: white;
+      flex: 1;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .modal-delete-confirm:hover {
+        background: #d32f2f;
+    }
+    .modal-cancel {
+      background: #f0f0f0;
+      color: #333;
+      flex: 1;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .modal-cancel:hover {
+      background: #e0e0e0;
+    }
+    #delete-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
   </style>
 </head>
 <body>
@@ -298,9 +389,49 @@
         <button id="expand-btn" onclick="toggleExpand()">Expand All</button>
       </div>
     </div>
-  </div>
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal">
+      <div class="modal-content">
+        <h3 id="delete-modal-text">Are you sure you want to delete this item?</h3>
+        <div class="modal-buttons">
+          <button onclick="hideDeleteModal()" class="modal-cancel">Cancel</button>
+          <button onclick="deleteSelectedItem()" class="modal-delete-confirm">Delete</button>
+        </div>
+      </div>
+    </div>
 
   <script>
+    let loadToDelete = null;
+
+    function hideDeleteModal() {
+      loadToDelete = null;
+      document.getElementById('delete-modal').style.display = 'none';
+    }
+    function showDeleteModal(id, name) {
+      loadToDelete = id;
+      const modal = document.getElementById('delete-modal');
+      modal.style.display = 'flex';
+      document.getElementById('delete-modal-text').textContent = `Are you sure you want to delete "${name}"?`;
+    }
+
+    async function deleteSelectedItem() {
+      if (!loadToDelete) return;
+
+      try {
+        const response = await fetch(`/api/delete-load/${loadToDelete}/`, { method: 'DELETE' });
+        const result = await response.json();
+
+        if (result.success) {
+          hideDeleteModal();
+          loadSimulations(); // refresh the list
+        } else {
+          alert('Failed to delete: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Error deleting load:', error);
+        alert('Error deleting load.');
+      }
+    }
     // File input visual feedback
     document.getElementById('csv-file').addEventListener('change', function(e) {
       const label = document.getElementById('file-label');
@@ -343,6 +474,8 @@
         if (data.success && data.simulations.length > 0) {
           loadsList.innerHTML = data.simulations.map(sim => `
             <div class="load-item" onclick="window.location.href='/load/${sim.id}/'">
+            <button class="delete-btn" onclick="event.stopPropagation(); showDeleteModal(${sim.id}, '${sim.name}')">×</button>
+
               <div class="load-info">
                 <h3>${sim.name}</h3>
                 <p>Created: ${new Date(sim.time).toLocaleString()}</p>
