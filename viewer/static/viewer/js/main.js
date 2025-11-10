@@ -190,70 +190,240 @@ let animSpeed = 0.05; // units per frame
 
 
 function animateItemsSequentially() {
-    if (0 == animQueue.length) return;
-
-    //get head of queue
+  if (animationState !== "PLAYING" || animQueue.length === 0) {
+        if (animQueue.length === 0 && animationState === "PLAYING") {
+            // We just finished the last item
+            animationState = "FINISHED";
+            animateBtn.textContent = 'Reset';
+        }
+        return;
+    }
+    // Get head of queue
     const meshObj = animQueue[0];
     const mesh = meshObj.mesh;
     const target = meshObj.targetPos;
 
-    const delta = target.clone().sub(mesh.position);
-    if (delta.length() < 0.01) {
+    // Check distance and snap/lerp
+    if (mesh.position.distanceTo(target) < 0.01) {
         mesh.position.copy(target);
-        animQueue.shift();
+        
+        // *** MODIFIED: Move item from 'to-do' to 'done' stack ***
+        const finishedItem = animQueue.shift(); // Remove from 'to-do'
+        loadedQueue.push(finishedItem);      // Add to 'done' stack
+
+        // Check if that was the last item
         if (animQueue.length === 0) {
-            isAnimating = false;
-            isResetMode = true;
+            animationState = "FINISHED";
             animateBtn.textContent = 'Reset';
         }
     } else {
         mesh.position.lerp(target, animSpeed);
-        isResetMode = true;
-        animateBtn.textContent = 'Reset';
+    }
+
+
+
+    // if (0 == animQueue.length) return;
+
+    // //get head of queue
+    // const meshObj = animQueue[0];
+    // const mesh = meshObj.mesh;
+    // const target = meshObj.targetPos;
+
+    // const delta = target.clone().sub(mesh.position);
+    // if (delta.length() < 0.01) {
+    //     mesh.position.copy(target);
+    //     animQueue.shift();
+    //     if (animQueue.length === 0) {
+    //         isAnimating = false;
+    //         isResetMode = true;
+    //         animateBtn.textContent = 'Reset';
+    //     }
+    // } else {
+    //     mesh.position.lerp(target, animSpeed);
+    //     isResetMode = true;
+    //     animateBtn.textContent = 'Reset';
+    // }
+}
+
+
+/**
+ * Animates the 'rewindItem' back to its original starting position.
+ */
+function animateRewind() {
+    if (!rewindItem) return;
+
+    const mesh = rewindItem.mesh;
+    const target = rewindItem.originalPos; // Rewind to the start
+
+    if (mesh.position.distanceTo(target) < 0.05) {
+        mesh.position.copy(target);
+        rewindItem = null; // We are done rewinding this item
+        // The animation is now in a "PAUSED" state
+    } else {
+        // Move back to the original position
+        mesh.position.lerp(target, animSpeed);
     }
 }
+
 
 function startAnimation() {
     animQueue = toBeLoadedItems.map(item => ({
         mesh: items.get(item.id),
         targetPos: item.targetPos,
+        originalPos: items.get(item.id).userData.originalPos.clone(),
         done: false
     }));
+    loadedQueue = [];
 }
 
 const animateBtn = document.getElementById('animate-btn');
 
 animateBtn.addEventListener('click', async () => {
+    
+    // Logic from previous fix: We want the "Resume" to interrupt the rewind
+    // (This part is unchanged from the last version I gave you)
 
-    if (isResetMode) {
-      toBeLoadedItems.forEach(item => {
-        const mesh = items.get(item.id);
-        if (mesh && mesh.userData.originalPos) {
-          mesh.position.copy(mesh.userData.originalPos);
-        }
-      });
-      isResetMode = false;
-      isAnimating = false;
-      animateBtn.textContent = 'Animate';
-      return;
+    switch (animationState) {
+        case "STOPPED":
+            // --- This is the "Animate" logic ---
+            await loadItemsForAnimation();
+            
+            // Reset all items to their original positions
+            toBeLoadedItems.forEach(item => {
+                const mesh = items.get(item.id);
+                if (mesh && mesh.userData.originalPos) {
+                    mesh.position.copy(mesh.userData.originalPos);
+                }
+            });
+
+            startAnimation(); // Build the queue
+            if (animQueue.length > 0) {
+                animationState = "PLAYING";
+                animateBtn.textContent = 'Pause';
+            }
+            break;
+
+        case "PLAYING":
+            // --- This is the "Pause" logic ---
+            animationState = "PAUSED";
+            animateBtn.textContent = 'Resume';
+            break;
+
+        case "PAUSED":
+            // --- This is the "Resume" logic ---
+            
+            // *** FIX: If resuming while rewinding, snap back and stop rewind ***
+            if (rewindItem) {
+                rewindItem.mesh.position.copy(rewindItem.originalPos);
+                rewindItem = null;
+            }
+
+            animationState = "PLAYING";
+            animateBtn.textContent = 'Pause';
+            break;
+
+        case "FINISHED":
+            // --- This is the "Reset" logic ---
+            toBeLoadedItems.forEach(item => {
+                const mesh = items.get(item.id);
+                if (mesh && mesh.userData.originalPos) {
+                    mesh.position.copy(mesh.userData.originalPos);
+                }
+            });
+            animationState = "STOPPED";
+            animateBtn.textContent = 'Animate';
+            // Queues are cleared in startAnimation() on next play
+            break;
     }
-
-    await loadItemsForAnimation();
-    // Reset all items to their original positions
-    toBeLoadedItems.forEach(item => {
-        const mesh = items.get(item.id);
-        if (mesh && mesh.userData.originalPos) {
-            mesh.position.copy(mesh.userData.originalPos);
-        }
-    });
-
-    // Rebuild the animation queue and start animation
-    startAnimation();
-    if (animQueue.length > 0) {
-      isAnimating = true;
-    }
-
 });
+
+
+
+const rewindBtn = document.getElementById('rewind-btn');
+
+rewindBtn.addEventListener('click', () => {
+    
+    // 1. If a rewind is already in progress, snap it to finish
+    //    so we can start the next one.
+    if (rewindItem) {
+        rewindItem.mesh.position.copy(rewindItem.originalPos);
+        rewindItem = null;
+    }
+
+    // 2. Store the state *before* we change it.
+    const wasPlaying = (animationState === "PLAYING");
+    const wasFinished = (animationState === "FINISHED");
+
+    // 3. Set the state to PAUSED (if it wasn't already stopped).
+    if (wasPlaying || wasFinished) {
+        animationState = "PAUSED";
+        animateBtn.textContent = 'Resume';
+    }
+
+    // 4. Decide *what* to rewind based on the *previous* state.
+    
+    // *** NEW FIX: Logic to handle both "pause-rewind" and "multi-rewind" ***
+    
+    let itemInProgress = null;
+    if (animQueue.length > 0) {
+        itemInProgress = animQueue[0];
+    }
+
+    // Check if we should rewind the item-in-progress, or the last completed one.
+    // We rewind the item-in-progress IF:
+    // 1. We were playing (wasPlaying) OR we were paused (animationState === "PAUSED")
+    // 2. AND That item is NOT already at its original position (this avoids the multi-rewind loop)
+    if (itemInProgress && 
+        !itemInProgress.mesh.position.equals(itemInProgress.originalPos) &&
+        (wasPlaying || animationState === "PAUSED")) 
+    {
+        // This handles both "rewind while playing" and "rewind while paused" (your original bug)
+        rewindItem = itemInProgress;
+    } 
+    // Otherwise, grab the last *completed* item from the stack.
+    // This handles "finished" and "multi-rewind" cases (the bug I introduced)
+    else if (loadedQueue.length > 0) {
+        // Take item off 'done' stack
+        rewindItem = loadedQueue.pop(); 
+        // Add it back to the front of the 'to-do' queue
+        animQueue.unshift(rewindItem);   
+    }
+    // If queues are empty, nothing happens.
+});
+
+// const animateBtn = document.getElementById('animate-btn');
+
+// animateBtn.addEventListener('click', async () => {
+
+//     if (isResetMode) {
+//       toBeLoadedItems.forEach(item => {
+//         const mesh = items.get(item.id);
+//         if (mesh && mesh.userData.originalPos) {
+//           mesh.position.copy(mesh.userData.originalPos);
+//         }
+//       });
+//       isResetMode = false;
+//       isAnimating = false;
+//       animateBtn.textContent = 'Animate';
+//       return;
+//     }
+
+//     await loadItemsForAnimation();
+//     // Reset all items to their original positions
+//     toBeLoadedItems.forEach(item => {
+//         const mesh = items.get(item.id);
+//         if (mesh && mesh.userData.originalPos) {
+//             mesh.position.copy(mesh.userData.originalPos);
+//         }
+//     });
+
+//     // Rebuild the animation queue and start animation
+//     startAnimation();
+//     if (animQueue.length > 0) {
+//       isAnimating = true;
+//     }
+
+// });
 
 
 // Handle add item form submission
@@ -516,15 +686,27 @@ function showUserMessage(msg, type) {
 // Currently commented out to prevent items from scattering around the scene
 loadItems();
 
-let isAnimating = false;
-let isResetMode = false
+// let isAnimating = false;
+// let isResetMode = false
+
+
+let loadedQueue = []; // Stack for items that are finished
+let rewindItem = null;  // The item currently being animated backward
+let animationState = "STOPPED"; // Replaces booleans
+
+
 // Animation loop
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
-  if (isAnimating){
-    animateItemsSequentially();
-  }
+  // Check if a rewind animation is active
+    if (rewindItem) {
+        animateRewind();
+    } 
+    // Check if the forward animation is playing
+    else if (animationState === "PLAYING") {
+        animateItemsSequentially();
+    }
   renderer.render(scene, camera);
   
 }
