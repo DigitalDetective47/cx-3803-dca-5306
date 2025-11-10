@@ -169,7 +169,7 @@ class Mosaic(Generic[N, T]):
 
     def __copy__(self) -> Self:
         ret: Final[Self] = type(self)(
-            self[self._x_boundaries[0], self._x_boundaries[0]],
+            self[self._x_boundaries[0], self._y_boundaries[0]],
             self.x_range,
             self.y_range,
         )
@@ -181,14 +181,14 @@ class Mosaic(Generic[N, T]):
     def fuse(self) -> None:
         "Merge identical & adjacent rows/columns to reduce memory usage."
         i: int = 0
-        while i < len(self.x_intervals):
+        while i < len(self.x_intervals) - 1:
             if self._grid_contents[i] == self._grid_contents[i + 1]:
                 del self._grid_contents[i + 1]
                 del self._x_boundaries[i + 1]
             else:
                 i += 1
         i = 0
-        while i < len(self.y_intervals):
+        while i < len(self.y_intervals) - 1:
             if all(column[i] == column[i + 1] for column in self._grid_contents):
                 for column in self._grid_contents:
                     del column[i + 1]
@@ -219,7 +219,7 @@ class Mosaic(Generic[N, T]):
         else:
             return self._grid_contents[
                 self._interval_index_helper(self.x_intervals, key[0])
-            ][self._interval_index_helper(self.x_intervals, key[1])]
+            ][self._interval_index_helper(self.y_intervals, key[1])]
 
     __hash__ = None  # type:ignore[assignment]
 
@@ -227,7 +227,7 @@ class Mosaic(Generic[N, T]):
         return chain.from_iterable(self._grid_contents)
 
     def __len__(self) -> int:
-        return (len(self._x_boundaries) + 1) * (len(self._y_boundaries) + 1)
+        return (len(self._x_boundaries) - 1) * (len(self._y_boundaries) - 1)
 
     def overlay(self, other: Mosaic[N, T], /) -> None:
         "Replace contents of this mosaic with the contents of other where they overlap. Raises a `RangeError` if `other` is not completely inside `self`."
@@ -312,7 +312,10 @@ class Mosaic(Generic[N, T]):
                 del self._grid_contents[0]
         self._x_boundaries[0] = value.min
         if value.max <= self.x_range.max:
-            while value.max not in self.x_intervals[-1]:
+            while (
+                value.max not in self.x_intervals[-1]
+                and value.max == self.x_intervals[-1].min
+            ):
                 del self._x_boundaries[-1]
                 del self._grid_contents[-1]
         self._x_boundaries[-1] = value.max
@@ -339,7 +342,10 @@ class Mosaic(Generic[N, T]):
                     del column[0]
         self._y_boundaries[0] = value.min
         if value.max <= self.y_range.max:
-            while value.max not in self.y_intervals[-1]:
+            while (
+                value.max not in self.y_intervals[-1]
+                and value.max == self.y_intervals[-1].min
+            ):
                 del self._y_boundaries[-1]
                 for column in self._grid_contents:
                     del column[-1]
