@@ -23,10 +23,11 @@ T = TypeVar("T")
 def compute_layout(sim: Simulation, /) -> None:
     stops: MutableSet[str] = set()
     for hu in HandlingUnit.objects.filter(
-    shipment=sim.shipment
-        ).filter(
-            Q(temp_add=sim) | Q(temp_add__isnull=True)
-        ):
+        Q(temp_add=sim) | Q(temp_add__isnull=True),
+        Q(simplacement__sim=sim, simplacement__temp_remove=False)
+        | Q(simplacement__isnull=True),
+        shipment=sim.shipment,
+    ):
         stops.add(hu.stop)
     base_x: float = 0.0
     for stop in sorted(stops):
