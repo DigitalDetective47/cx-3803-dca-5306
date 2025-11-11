@@ -1,3 +1,4 @@
+from __future__ import annotations
 from collections.abc import Iterator, MutableSet, Sequence
 from copy import copy
 from itertools import chain, pairwise, product
@@ -22,11 +23,10 @@ T = TypeVar("T")
 def compute_layout(sim: Simulation, /) -> None:
     stops: MutableSet[str] = set()
     for hu in HandlingUnit.objects.filter(
-        Q(temp_add=sim) | Q(temp_add__isnull=True),
-        Q(simplacement__sim=sim, simplacement__temp_remove=False)
-        | Q(simplacement__isnull=True),
-        shipment=sim.shipment,
-    ):
+    shipment=sim.shipment
+        ).filter(
+            Q(temp_add=sim) | Q(temp_add__isnull=True)
+        ):
         stops.add(hu.stop)
     base_x: float = 0.0
     for stop in sorted(stops):

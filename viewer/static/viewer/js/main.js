@@ -457,6 +457,8 @@ document.getElementById('add-item-form').addEventListener('submit', async (e) =>
 
       addItemToScene(result.item);
 
+      
+
       e.target.reset();
 
       setTimeout(() => {
@@ -547,6 +549,53 @@ document.getElementById('set-pos-form').addEventListener('submit', async (e) => 
 
 
 
+const runBtn = document.getElementById("runAlgoButton");
+if (runBtn) {
+  runBtn.addEventListener("click", async () => {
+    console.log("Run Algo button clicked. SIMULATION_ID =", SIMULATION_ID);
+
+    if (!SIMULATION_ID) {
+      console.error("No SIMULATION_ID available.");
+      alert("No simulation selected.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/run-algo/${SIMULATION_ID}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // body can be omitted since the view reads from URL path
+        // body: JSON.stringify({}),
+      });
+
+      console.log("HTTP status:", res.status);
+
+      // make sure we can still read JSON once
+      const data = await res.json();
+
+      console.log("Run algo response:", data);
+
+      if (res.ok && data.status === "ok") {
+        alert("Algorithm ran successfully!");
+      } else {
+        alert("Algorithm failed. See console for details.");
+      }
+    } catch (err) {
+      console.error("Error running algorithm:", err);
+      alert("Error running algorithm — check console.");
+    }
+  });
+} else {
+  console.error("runAlgoButton not found in DOM");
+}
+
+
+
+
+
+
 
 // Toggle panel functionality
 const addToggleBtn = document.getElementById('add-toggle-panel-btn');
@@ -556,26 +605,29 @@ const setPosPanel = document.getElementById('set-pos-ui-panel');
 let isAddPanelOpen = false;
 
 // Helper to open one panel and close the other
+// Find and replace your old togglePanel function with this
 function togglePanel(btn, panel, otherBtn, otherPanel, label) {
-  const isOpen = !panel.classList.contains('collapsed');
+    // Get the container for ALL animation buttons
+    const animControls = document.getElementById('animation-controls');
+    const isOpen = !panel.classList.contains('collapsed');
 
-  if (isOpen) {
-    panel.classList.add('collapsed');
-    btn.classList.remove('panel-open');
-    btn.textContent = label;
-    otherBtn.style.display = 'flex';
-    animateBtn.style.display = 'flex';
-  } else {
-    panel.classList.remove('collapsed');
-    btn.classList.add('panel-open');
-    btn.textContent = '×';
+    if (isOpen) {
+        panel.classList.add('collapsed');
+        btn.classList.remove('panel-open');
+        btn.textContent = label;
+        otherBtn.style.display = 'flex';
+        animControls.style.display = 'flex'; // Show the whole container
+    } else {
+        panel.classList.remove('collapsed');
+        btn.classList.add('panel-open');
+        btn.textContent = '×';
 
-    otherPanel.classList.add('collapsed');
-    otherBtn.classList.remove('panel-open');
-    otherBtn.textContent = otherBtn.dataset.defaultLabel || otherBtn.textContent;
-    otherBtn.style.display = 'none';
-    animateBtn.style.display = 'none';
-  }
+        otherPanel.classList.add('collapsed');
+        otherBtn.classList.remove('panel-open');
+        otherBtn.textContent = otherBtn.dataset.defaultLabel || otherBtn.textContent;
+        otherBtn.style.display = 'none';
+        animControls.style.display = 'none'; // Hide the whole container
+    }
 }
 
 addToggleBtn.dataset.defaultLabel = 'Add New Item';
@@ -589,6 +641,107 @@ addToggleBtn.addEventListener('click', () => {
 setPosToggleBtn.addEventListener('click', () => {
   togglePanel(setPosToggleBtn, setPosPanel, addToggleBtn, addPanel, 'Set Item Position');
 });
+
+
+
+
+async function loadConfigs() {
+  if (!SIMULATION_ID) return;
+  try {
+    const res = await fetch(`/api/list-configs/${SIMULATION_ID}/`);
+    const data = await res.json();
+    if (!data.success) return;
+
+    const select = document.getElementById("configSelect");
+    select.innerHTML = '<option value="">-- select saved config --</option>';
+    data.configs.forEach(cfg => {
+      const opt = document.createElement("option");
+      opt.value = cfg.id;
+      opt.textContent = `${cfg.name} (${new Date(cfg.created_at).toLocaleString()})`;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error("Error loading configs:", err);
+  }
+}
+
+// save current simplacement to new saved configuration
+document.getElementById("saveConfigButton").addEventListener("click", async () => {
+  if (!SIMULATION_ID) {
+    alert("No simulation loaded.");
+    return;
+  }
+  const name = prompt("Enter a name for this configuration:", `Config ${new Date().toLocaleString()}`);
+  if (name === null) return; // user cancelled
+
+  try {
+    const res = await fetch(`/api/save-config/${SIMULATION_ID}/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // "X-CSRFToken": getCookie("csrftoken"), // uncomment if view is protected
+      },
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(data.message);
+      await loadConfigs(); // refresh dropdown so new config shows up
+    } else {
+      alert("Error saving configuration: " + (data.message || "unknown"));
+    }
+  } catch (err) {
+    console.error("Save config error:", err);
+    alert("Error saving configuration — check console");
+  }
+});
+
+// load selected configuration (replace simplacements)
+document.getElementById("loadConfigButton").addEventListener("click", async () => {
+  const select = document.getElementById("configSelect");
+  const configId = select.value;
+  if (!configId) {
+    alert("Please choose a configuration to load.");
+    return;
+  }
+
+  if (!confirm("Loading this configuration will overwrite current placements. Continue?")) return;
+
+  try {
+    const res = await fetch(`/api/load-config/${configId}/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(data.message);
+      location.reload(); // reload the page so front-end and DB are consistent
+    } else {
+      alert("Error loading configuration: " + (data.message || "unknown"));
+    }
+  } catch (err) {
+    console.error("Load config error:", err);
+    alert("Error loading configuration — check console");
+  }
+});
+
+// run once when page loads to populate list
+document.addEventListener("DOMContentLoaded", () => {
+  loadConfigs();
+});
+
+
+
+
+
+
+
+
+
 
 // Click to select
 const raycaster = new THREE.Raycaster();

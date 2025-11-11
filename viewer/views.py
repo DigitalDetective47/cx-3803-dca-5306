@@ -1,21 +1,31 @@
 from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
+from django.db import transaction
 import csv
 import io
-from .models import HandlingUnit, Shipment, Simulation, SimPlacement
+from .models import HandlingUnit, Shipment, Simulation, SimPlacement, SavedConfiguration, SavedPlacement
 from .algo import compute_layout
 
 def load_selection(request):
     # Landing page showing all loads
     return render(request, 'viewer/load_selection.html')
 
+@csrf_exempt
+def run_algo(request, simulation_id):
+    simulation = get_object_or_404(Simulation, id=simulation_id)
+    print("here")
+    compute_layout(simulation)
+
+    return JsonResponse({"status": "ok"})
+
 def load_view(request, simulation_id):
     # 3D viewer for a specific load
     simulation = get_object_or_404(Simulation, id=simulation_id)
-    compute_layout(simulation)
+    # compute_layout(simulation)
     return render(request, 'viewer/index.html', {'simulation': simulation})
 
 @csrf_exempt
@@ -57,6 +67,27 @@ def add_item(request):
             stop=data['stop'],
             temp_add=simulation
         )
+    #     SimPlacement.objects.get_or_create(
+    #       sim=simulation,
+    #       handling_unit=data['id'],
+    #       defaults={
+              
+    #           "orientation": ,
+    #           "temp_remove": False,
+    #       }
+    #   )
+        
+        # SimPlacement.objects.update_or_create(
+        #     hu=item,
+        #     sim=simulation,
+        #     defaults={
+        #         "x": 0.0,
+        #         "y": 0.0,
+        #         "z": 0.0,
+        #         "orientation": "XYZ",
+        #         "temp_remove": False
+        #     }
+        # )
 
         return JsonResponse({
             'success': True,
@@ -83,6 +114,93 @@ def add_item(request):
             'message': message
         }, status=400)
     
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def save_configuration(request, simulation_id):
+    """
+    Save current SimPlacement rows for a simulation into a new SavedConfiguration.
+    Expects JSON: {"name": "Optional name"}
+    """
+    try:
+        sim = get_object_or_404(Simulation, id=simulation_id)
+        data = json.loads(request.body or "{}")
+        name = data.get("name") or f"Config {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
+        with transaction.atomic():
+            config = SavedConfiguration.objects.create(simulation=sim, name=name)
+
+            placements = SimPlacement.objects.filter(sim=sim).select_related("hu")
+            objs = []
+            for p in placements:
+                objs.append(SavedPlacement(
+                    configuration=config,
+                    handling_unit=p.hu,
+                    x=p.x,
+                    y=p.y,
+                    z=p.z,
+                    orientation=str(p.orientation)[-3:],
+                ))
+            # bulk create for speed
+            if objs:
+                SavedPlacement.objects.bulk_create(objs)
+
+        return JsonResponse({"success": True, "message": f"Configuration '{name}' saved.", "config_id": config.id})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@require_http_methods(["GET"])
+def list_configurations(request, simulation_id):
+    """
+    Return JSON list of saved configurations for a simulation.
+    """
+    try:
+        configs = SavedConfiguration.objects.filter(simulation_id=simulation_id).order_by("-created_at")
+        data = [
+            {"id": c.id, "name": c.name, "created_at": c.created_at.isoformat()}
+            for c in configs
+        ]
+        return JsonResponse({"success": True, "configs": data})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def load_configuration(request, config_id):
+    """
+    Replace this simulation's SimPlacement entries with placements from SavedConfiguration.
+    """
+    try:
+        config = get_object_or_404(SavedConfiguration, id=config_id)
+        sim = config.simulation
+
+        with transaction.atomic():
+            # delete current placements for this simulation
+            SimPlacement.objects.filter(sim=sim).delete()
+
+            # copy saved placements back into SimPlacement
+            objs = []
+            for sp in config.placements.select_related("handling_unit").all():
+                objs.append(SimPlacement(
+                    sim=sim,
+                    hu=sp.handling_unit,
+                    x=sp.x,
+                    y=sp.y,
+                    z=sp.z,
+                    orientation=sp.orientation,
+                    temp_remove=False
+                ))
+            if objs:
+                SimPlacement.objects.bulk_create(objs)
+
+        return JsonResponse({"success": True, "message": f"Configuration '{config.name}' loaded."})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+
 
 
 @csrf_exempt

@@ -461,6 +461,16 @@
   <button id="add-toggle-panel-btn" class="toggle-panel-btn" title="Toggle Add Item Panel">Add New Item</button>
   <button id ="delete-item-btn" onclick="showDeleteModal()">Delete Selected Item</button>
 
+  <div id="config-controls" style="position:absolute; right:20px; top:300px; z-index:1000;">
+    <button id="saveConfigButton">Save Configuration</button>
+    <select id="configSelect" style="min-width:220px;">
+      <option value="">-- select saved config --</option>
+    </select>
+    <button id="loadConfigButton">Load Selected</button>
+  </div>
+
+
+
   <!-- UI Panel for Adding Items -->
   <div id="ui-panel" class="collapsed">
     <h2>Add New Item</h2>
@@ -545,6 +555,8 @@
   <div id="animation-controls">
     <button id="animate-btn">Animate</button>
     <button id="rewind-btn">Rewind</button>
+    <button id="runAlgoButton">Run Algorithm</button>
+
   </div>
 
   <!-- Include Three.js and script -->
