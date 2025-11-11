@@ -546,50 +546,6 @@ document.getElementById('set-pos-form').addEventListener('submit', async (e) => 
 });
 
 
-
-
-// Toggle panel functionality
-const addToggleBtn = document.getElementById('add-toggle-panel-btn');
-const setPosToggleBtn = document.getElementById('set-pos-toggle-btn');
-const addPanel = document.getElementById('ui-panel');
-const setPosPanel = document.getElementById('set-pos-ui-panel');
-let isAddPanelOpen = false;
-
-// Helper to open one panel and close the other
-function togglePanel(btn, panel, otherBtn, otherPanel, label) {
-  const isOpen = !panel.classList.contains('collapsed');
-
-  if (isOpen) {
-    panel.classList.add('collapsed');
-    btn.classList.remove('panel-open');
-    btn.textContent = label;
-    otherBtn.style.display = 'flex';
-    animateBtn.style.display = 'flex';
-  } else {
-    panel.classList.remove('collapsed');
-    btn.classList.add('panel-open');
-    btn.textContent = '×';
-
-    otherPanel.classList.add('collapsed');
-    otherBtn.classList.remove('panel-open');
-    otherBtn.textContent = otherBtn.dataset.defaultLabel || otherBtn.textContent;
-    otherBtn.style.display = 'none';
-    animateBtn.style.display = 'none';
-  }
-}
-
-addToggleBtn.dataset.defaultLabel = 'Add New Item';
-setPosToggleBtn.dataset.defaultLabel = 'Set Item Position';
-
-// Add listeners
-addToggleBtn.addEventListener('click', () => {
-  togglePanel(addToggleBtn, addPanel, setPosToggleBtn, setPosPanel, 'Add New Item');
-});
-
-setPosToggleBtn.addEventListener('click', () => {
-  togglePanel(setPosToggleBtn, setPosPanel, addToggleBtn, addPanel, 'Set Item Position');
-});
-
 // Click to select
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();

@@ -4,288 +4,428 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
   <meta charset="UTF-8">
-  <title>Truck Loading Tetris</title>
+  <title>Truck Loading Tetris - 3D Viewer</title>
   <style>
-    body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
-    canvas { display: block; width: 100vw; height: 100vh; }
-
-    #animation-controls {
-        position: absolute;
-        top: 130px;
-        right: 20px;
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-        gap: 10px; /* Spacing between buttons */
-        width: 150px; /* Set a consistent width */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    #animate-btn {
-        position: static; /* No longer absolute */
-        z-index: 1000;
-        background: #FF9800;
-        color: white;
-        width: 100%; /* Fill container */
-        border: none;
-        border-radius: 6px;
-        padding: 10px 16px;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: background 0.3s;
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #1a1a1a;
     }
 
-    #animate-btn:hover {
-        background: #FB8C00;
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
     }
 
-    #rewind-btn {
-        background: #03A9F4; /* Blue color */
-        color: white;
-        width: 100%; /* Fill container */
-        border: none;
-        border-radius: 6px;
-        padding: 10px 16px;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: background 0.3s;
+    /* Header */
+    .viewer-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: rgba(255, 255, 255, 0.98);
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
-    #rewind-btn:hover {
-        background: #0288D1;
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
     }
 
-
-    #ui-panel {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 20px;
+    .back-btn {
+      width: 40px;
+      height: 40px;
       border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      min-width: 280px;
-      max-height: 90vh;
-      overflow-y: auto;
+      background: #f3f4f6;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      color: #6b7280;
+      font-size: 20px;
+    }
+
+    .back-btn:hover {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .load-title-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .load-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .load-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .header-controls.hidden {
+      display: none;
+    }
+
+    .header-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-btn-animate {
+      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+      color: white;
+    }
+
+    .header-btn-animate:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    }
+
+    .header-btn-rewind {
+      background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+      color: white;
+    }
+
+    .header-btn-rewind:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+    }
+
+    /* Left Sidebar */
+    .control-sidebar {
+      position: fixed;
+      left: 24px;
+      top: 88px;
+      bottom: 24px;
+      width: 320px;
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
       transition: transform 0.3s ease, opacity 0.3s ease;
     }
 
-    #set-pos-ui-panel {
-      position: absolute;
-      top: 70px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      min-width: 280px;
-      max-height: 90vh;
-      overflow-y: auto;
-      transition: transform 0.3s ease, opacity 0.3s ease;
-    }
-
-    
-
-    .collapsed {
-      transform: translateX(calc(100% + 20px));
+    .control-sidebar.collapsed {
+      transform: translateX(-100%);
       opacity: 0;
       pointer-events: none;
     }
 
-    .toggle-panel-btn {
-      position: absolute;
-      background: rgba(76, 175, 80, 0.95);
-      color: white;
+    .sidebar-toggle-btn {
+      position: fixed;
+      left: 24px;
+      top: 88px;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.98);
       border: none;
-      border-radius: 6px;
-      width: auto;
-      height: 35px;
-      padding: 8px 12px;
-      font-size: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
       cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      z-index: 998;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.3s, transform 0.3s;
-      z-index: 1000;
-      font-weight: bold;
-      line-height: 1;
+      transition: all 0.2s;
+      color: #6b7280;
     }
 
-    .toggle-panel-btn:hover {
-      background: rgba(69, 160, 73, 0.95);
-      transform: scale(1.1);
+    .sidebar-toggle-btn:hover {
+      background: white;
+      color: #374151;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     }
 
-    .toggle-panel-btn.panel-open {
-      background: rgba(244, 67, 54, 0.95);
+    .sidebar-toggle-btn.sidebar-open {
+      display: none;
     }
 
-    .toggle-panel-btn.panel-open:hover {
-      background: rgba(229, 57, 53, 0.95);
+    .sidebar-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    #add-toggle-panel-btn {
-      top: 20px;
-      right: 20px;
-    }
-
-    #set-pos-toggle-btn {
-      top: 70px; 
-      right: 20px;
-    }
-
-    #ui-panel h2 {
-      margin: 0 0 15px 0;
+    .sidebar-header h2 {
       font-size: 18px;
-      color: #333;
+      font-weight: 600;
+      color: #111827;
     }
 
-    #set-pos-ui-panel h2 {
-      margin: 0 0 15px 0;
+    .sidebar-close-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: #f3f4f6;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      color: #6b7280;
       font-size: 18px;
-      color: #333;
     }
 
-    .form-group {
+    .sidebar-close-btn:hover {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+
+    .sidebar-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .sidebar-content::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 3px;
+    }
+
+    /* Control Sections */
+    .control-section {
+      margin-bottom: 24px;
+    }
+
+    .control-section:has(.btn-delete) {
+      display: flex;
+      justify-content: center;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .section-toggle {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    .section-toggle:hover {
+      background: #e5e7eb;
+    }
+
+    .section-content {
+      max-height: 1000px;
+      overflow: visible;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+    }
+
+    .section-content.collapsed {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+    }
+
+    /* Animation Controls */
+    .animation-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn-primary {
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-animate {
+      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+      color: white;
+    }
+
+    .btn-animate:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-rewind {
+      background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+      color: white;
+    }
+
+    .btn-rewind:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+    }
+
+    .btn-delete {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+    }
+
+    .btn-delete:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 14px;
     }
 
     .form-group label {
       display: block;
-      margin-bottom: 4px;
-      font-size: 13px;
-      color: #555;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #374151;
       font-weight: 500;
     }
 
     .form-group input, .form-group select {
       width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 13px;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
       box-sizing: border-box;
+      transition: all 0.2s;
+      font-family: inherit;
     }
 
     .form-group input:focus, .form-group select:focus {
       outline: none;
-      border-color: #4CAF50;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
-    button {
+    .form-submit-btn {
       width: 100%;
-      padding: 10px;
-      background: #4CAF50;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
-      border-radius: 4px;
-      font-size: 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
       cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s;
+      transition: all 0.2s;
+      margin-top: 8px;
     }
 
-    button:hover {
-      background: #45a049;
+    .form-submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
-    button:active {
-      background: #3d8b40;
-    }
-
-    #delete-item-btn {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      padding: 10px 20px;
-      background: #f44336;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      width: auto;
-      height: 35px;
-      padding: 8px 12px;
-      font-size: 20px;
-      cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.3s, transform 0.3s;
-      z-index: 1000;
-      font-weight: bold;
-      line-height: 1;
-    }
-
-    #delete-item-btn:hover {
-      background: #d32f2f;
-      transform: scale(1.1);
+    .form-submit-btn:active {
+      transform: translateY(0);
     }
 
     .message {
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 4px;
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
       font-size: 13px;
       display: none;
+      font-weight: 500;
     }
 
     .message.success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
     }
 
     .message.error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
     }
 
-    #load-header {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 10px 14px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      z-index: 1000;
-    }
-
-    #load-header h3 {
-      margin: 0;
-      font-size: 18px;
-      color: #333;
-    }
-
-    #switch-load-btn {
-      padding: 8px 12px;
-      background: #2196F3;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 20px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s;
-      width: auto;
-    }
-
-    #switch-load-btn:hover {
-      background: #1976D2;
-    }
-
-    /* Confirmation Modal */
-    #confirm-modal {
+    /* Modals */
+    .modal {
       display: none;
       position: fixed;
       top: 0;
@@ -293,127 +433,115 @@
       width: 100%;
       height: 100%;
       background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
       z-index: 2000;
       align-items: center;
       justify-content: center;
     }
 
-    #confirm-modal.show {
+    .modal.show {
       display: flex;
     }
 
     .modal-content {
       background: white;
-      border-radius: 12px;
-      padding: 30px;
-      max-width: 400px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 440px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       text-align: center;
     }
 
     .modal-content h3 {
-      margin: 0 0 20px 0;
-      color: #333;
+      margin: 0 0 24px 0;
+      color: #111827;
       font-size: 20px;
+      font-weight: 600;
     }
 
     .modal-buttons {
       display: flex;
-      gap: 10px;
-      margin-top: 25px;
+      gap: 12px;
+      margin-top: 28px;
     }
 
     .modal-buttons button {
       flex: 1;
       padding: 12px 24px;
       border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: bold;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.2s;
+    }
+
+    .modal-cancel {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .modal-cancel:hover {
+      background: #e5e7eb;
     }
 
     .modal-confirm {
-      background: #4CAF50;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
     }
 
     .modal-confirm:hover {
-      background: #45a049;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
-    .modal-cancel {
-      background: #f0f0f0;
-      color: #333;
+    .modal-delete-confirm {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
     }
 
-    .modal-cancel:hover {
-      background: #e0e0e0;
+    .modal-delete-confirm:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
     }
-  
-  /* Delete modal */
-  #delete-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 2000;
-    align-items: center;
-    justify-content: center;
-  }
 
-  #delete-modal.show {
-    display: flex;
-  }
+    /* Global Message */
+    .global-message {
+      position: fixed;
+      top: 88px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 12px;
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #111827;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(10px);
+      display: none;
+      z-index: 3000;
+      max-width: 500px;
+      border: 1px solid #e5e7eb;
+    }
 
-  .modal-delete-confirm {
-    background: #f44336;
-    color: white;
-  }
+    .global-message.success {
+      background: #d1fae5;
+      color: #065f46;
+      border-color: #6ee7b7;
+    }
 
-  .modal-delete-confirm:hover {
-      background: #d32f2f;
-  }
+    .global-message.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border-color: #fca5a5;
+    }
 
-  /* Global top message (for delete, errors, etc.) */
-  .global-message {
-    position: fixed;
-    top: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 6px;
-    padding: 12px 20px;
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    display: none;
-    z-index: 3000;
-    max-width: 80vw;
-    white-space: nowrap;
-  }
-
-  .global-message.success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-  }
-
-  .global-message.error {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-  }
-
-  .global-message.info {
-    background: #e2e3e5;
-    color: #383d41;
-    border: 1px solid #d6d8db;
-  }
+    .global-message.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border-color: #93c5fd;
+    }
   </style>
    <script type="importmap">
   {
@@ -425,126 +553,173 @@
   </script>
 </head>
 <body>
+  <!-- 3D Canvas -->
   <canvas id="scene"></canvas>
-  <!-- Global Top Message -->
+
+  <!-- Header -->
+  <header class="viewer-header">
+    <div class="header-left">
+      <button class="back-btn" onclick="showConfirmModal()" title="Back to Dashboard">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div class="load-title-section">
+        <div class="load-icon">{{ simulation.name.0|upper }}</div>
+        <h1 class="load-title">{{ simulation.name }}</h1>
+      </div>
+    </div>
+    <div class="header-controls hidden" id="header-controls">
+      <button id="header-animate-btn" class="header-btn header-btn-animate">
+        <span>Animate</span>
+      </button>
+      <button id="header-rewind-btn" class="header-btn header-btn-rewind">
+        <span>Rewind</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sidebar Toggle Button -->
+  <button class="sidebar-toggle-btn sidebar-open" id="sidebar-toggle-btn" onclick="toggleSidebar()">
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+  </button>
+
+  <!-- Left Sidebar -->
+  <aside class="control-sidebar" id="control-sidebar">
+    <div class="sidebar-header">
+      <h2>Controls</h2>
+      <button class="sidebar-close-btn" onclick="toggleSidebar()">×</button>
+    </div>
+    <div class="sidebar-content">
+
+      <!-- Animation Section -->
+      <div class="control-section">
+        <div class="section-header">
+          <span class="section-title">Animation</span>
+        </div>
+        <div class="section-content">
+          <div class="animation-buttons">
+            <button id="animate-btn" class="btn-primary btn-animate">
+              <span>Animate</span>
+            </button>
+            <button id="rewind-btn" class="btn-primary btn-rewind">
+              <span>Rewind</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add HU Section -->
+      <div class="control-section">
+        <div class="section-header" onclick="toggleSection('add-item')">
+          <span class="section-title">Add New HU</span>
+          <div class="section-toggle" id="add-item-toggle">+</div>
+        </div>
+        <div class="section-content collapsed" id="add-item-content">
+          <form id="add-item-form">
+            <div class="form-group">
+              <label for="item-id">HU ID</label>
+              <input type="text" id="item-id" name="id" placeholder="Enter HU ID" required>
+            </div>
+            <div class="form-group">
+              <label for="item-weight">Weight (lbs)</label>
+              <input type="number" id="item-weight" name="weight" step="0.01" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+              <label for="item-x-size">Length (in)</label>
+              <input type="number" id="item-x-size" name="x_size" step="0.1" placeholder="0.0" required>
+            </div>
+            <div class="form-group">
+              <label for="item-y-size">Width (in)</label>
+              <input type="number" id="item-y-size" name="y_size" step="0.1" placeholder="0.0" required>
+            </div>
+            <div class="form-group">
+              <label for="item-z-size">Height (in)</label>
+              <input type="number" id="item-z-size" name="z_size" step="0.1" placeholder="0.0" required>
+            </div>
+            <div class="form-group">
+              <label for="item-shipment">Shipment ID</label>
+              <input type="number" id="item-shipment" name="shipment" placeholder="Enter ID" required>
+            </div>
+            <div class="form-group">
+              <label for="item-stop">Stop</label>
+              <input type="text" id="item-stop" name="stop" maxlength="3" placeholder="ABC" required>
+            </div>
+            <button type="submit" class="form-submit-btn">Add HU</button>
+            <div id="message" class="message"></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Set Position Section -->
+      <div class="control-section">
+        <div class="section-header" onclick="toggleSection('set-position')">
+          <span class="section-title">Set HU Position</span>
+          <div class="section-toggle" id="set-position-toggle">+</div>
+        </div>
+        <div class="section-content collapsed" id="set-position-content">
+          <form id="set-pos-form">
+            <div class="form-group">
+              <label for="pos-item-id">HU ID</label>
+              <input type="text" id="pos-item-id" name="id" placeholder="Enter HU ID" required>
+            </div>
+            <div class="form-group">
+              <label for="item-x-coord">X Coordinate</label>
+              <input type="number" id="item-x-coord" name="x_coord" step="0.1" placeholder="0.0" required>
+            </div>
+            <div class="form-group">
+              <label for="item-y-coord">Y Coordinate</label>
+              <input type="number" id="item-y-coord" name="y_coord" step="0.1" placeholder="0.0" required>
+            </div>
+            <div class="form-group">
+              <label for="item-z-coord">Z Coordinate</label>
+              <input type="number" id="item-z-coord" name="z_coord" step="0.1" placeholder="0.0" required>
+            </div>
+            <div class="form-group">
+              <label for="item-orientation">Orientation</label>
+              <input type="text" id="item-orientation" name="orientation" placeholder="XYZ, ZXY, etc.">
+            </div>
+            <button type="submit" class="form-submit-btn">Set Position</button>
+            <div id="set-pos-message" class="message"></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Delete HU Section -->
+      <div class="control-section">
+        <button onclick="showDeleteModal()" class="btn-primary btn-delete">Delete Selected HU</button>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- Global Message -->
   <div id="global-message" class="global-message"></div>
 
-  <!-- Load Header -->
-  <div id="load-header">
-    <h3 id="load-name">{{ simulation.name }}</h3>
-    <button id="switch-load-btn" onclick="showConfirmModal()">Switch Load</button>
-  </div>
-
-  <!-- Confirmation Modal -->
-  <div id="confirm-modal">
+  <!-- Switch Load Confirmation Modal -->
+  <div id="confirm-modal" class="modal">
     <div class="modal-content">
-      <h3>Are you sure you want to switch loads?</h3>
+      <h3>Back to Dashboard?</h3>
+      <p style="color: #6b7280; margin-top: 8px;">You'll return to the main dashboard</p>
       <div class="modal-buttons">
         <button class="modal-cancel" onclick="hideConfirmModal()">Cancel</button>
-        <button class="modal-confirm" onclick="confirmSwitchLoad()">Confirm</button>
+        <button class="modal-confirm" onclick="confirmSwitchLoad()">Continue</button>
       </div>
     </div>
   </div>
 
-  <!-- Delete Confirmation Modal -->
-  <div id="delete-modal">
+  <!-- Delete HU Modal -->
+  <div id="delete-modal" class="modal">
     <div class="modal-content">
-      <h3>Are you sure you want to delete this item?</h3>
+      <h3>Delete HU?</h3>
+      <p style="color: #6b7280; margin-top: 8px;">This action cannot be undone</p>
       <div class="modal-buttons">
         <button class="modal-cancel" onclick="hideDeleteModal()">Cancel</button>
-        <button class="modal-delete-confirm" onclick="deleteSelectedItem()">Delete</button>
+        <button class="modal-delete-confirm" onclick="window.deleteSelectedItem()">Delete</button>
       </div>
     </div>
-  </div>
-
-  <!-- Toggle Button -->
-  <button id="add-toggle-panel-btn" class="toggle-panel-btn" title="Toggle Add Item Panel">Add New Item</button>
-  <button id ="delete-item-btn" onclick="showDeleteModal()">Delete Selected Item</button>
-
-  <!-- UI Panel for Adding Items -->
-  <div id="ui-panel" class="collapsed">
-    <h2>Add New Item</h2>
-    <form id="add-item-form">
-      <div class="form-group">
-        <label for="item-id">HU ID</label>
-        <input type="text" id="item-id" name="id" placeholder="Enter HU ID" required>
-      </div>
-
-      <div class="form-group">
-        <label for="item-weight">Weight (lbs)</label>
-        <input type="number" id="item-weight" name="weight" step="0.01" placeholder="Enter Weight" required>
-      </div>
-
-      <div class="form-group">
-        <label for="item-x-size">Length (in)</label>
-        <input type="number" id="item-x-size" name="x_size" step="0.1" placeholder="Enter Length" required>
-      </div>
-
-      <div class="form-group">
-        <label for="item-y-size">Width (in)</label>
-        <input type="number" id="item-y-size" name="y_size" step="0.1" placeholder="Enter Width" required>
-      </div>
-
-      <div class="form-group">
-        <label for="item-z-size">Height (in)</label>
-        <input type="number" id="item-z-size" name="z_size" step="0.1" placeholder="Enter Height" required>
-      </div>
-
-      <div class="form-group">
-        <label for="item-shipment">Shipment ID</label>
-        <input type="number" id="item-shipment" name="shipment" placeholder="Enter Shipment ID" required>
-      </div>
-
-      <div class="form-group">
-        <label for="item-stop">Stop</label>
-        <input type="text" id="item-stop" name="stop" maxlength="3" placeholder="Enter Stop" required>
-      </div>
-
-      <button type="submit">Add HU</button>
-      <div id="message" class="message"></div>
-    </form>
-  </div>
-
-  <!-- UI Panel for Setting Position of Items -->
-  <button id="set-pos-toggle-btn" class="toggle-panel-btn" title="Toggle Set Position Panel">Set HU Position</button>
-  <div id="set-pos-ui-panel" class="collapsed">
-    <h2>Set Position</h2>
-    <form id="set-pos-form">
-      <div class="form-group">
-        <label for="pos-item-id">HU ID</label>
-        <input type="text" id="pos-item-id" name="id" placeholder="Enter HU ID" required>
-      </div>
-
-      <div class="form-group">
-        <label for="item-x-coord">X Coordinate</label>
-        <input type="number" id="item-x-coord" name="x_coord" step="0.1" placeholder="Enter X Coordinate" required>
-      </div>
-
-      <div class="form-group">
-        <label for="item-y-coord">Y Coordinate</label>
-        <input type="number" id="item-y-coord" name="y_coord" step="0.1" placeholder="Enter Y Coordinate" required>
-      </div>
-
-      <div class="form-group">
-        <label for="item-z-coord">Z Coordinate</label>
-        <input type="number" id="item-z-coord" name="z_coord" step="0.1" placeholder="Enter Z Coordinate" required>
-      </div>
-
-      <div class="form-group">
-        <label for="item-orientation">Orientation</label>
-        <input type="text" id="item-orientation" name="orientation" step="0.1" placeholder="Enter Orientation (ie 'XYZ', 'ZXY', etc)">
-      </div>
-
-      <button type="submit">Set Position</button>
-      <div id="set-pos-message" class="message"></div>
-    </form>
-  </div>
-
-
-  <!-- <button id="animate-btn">Animate</button> -->
-  <div id="animation-controls">
-    <button id="animate-btn">Animate</button>
-    <button id="rewind-btn">Rewind</button>
   </div>
 
   <!-- Include Three.js and script -->
@@ -576,6 +751,65 @@
     function hideDeleteModal() {
       document.getElementById('delete-modal').classList.remove('show');
     }
+
+    // Toggle collapsible section
+    function toggleSection(sectionId) {
+      const content = document.getElementById(sectionId + '-content');
+      const toggle = document.getElementById(sectionId + '-toggle');
+
+      if (content && toggle) {
+        content.classList.toggle('collapsed');
+        toggle.textContent = content.classList.contains('collapsed') ? '+' : '−';
+      }
+    }
+
+    // Toggle sidebar visibility
+    function toggleSidebar() {
+      const sidebar = document.getElementById('control-sidebar');
+      const toggleBtn = document.getElementById('sidebar-toggle-btn');
+      const headerControls = document.getElementById('header-controls');
+
+      sidebar.classList.toggle('collapsed');
+      toggleBtn.classList.toggle('sidebar-open');
+      headerControls.classList.toggle('hidden');
+    }
+
+    // Connect header buttons to sidebar buttons (after main.js loads)
+    window.addEventListener('DOMContentLoaded', () => {
+      const headerAnimateBtn = document.getElementById('header-animate-btn');
+      const headerRewindBtn = document.getElementById('header-rewind-btn');
+      const sidebarAnimateBtn = document.getElementById('animate-btn');
+      const sidebarRewindBtn = document.getElementById('rewind-btn');
+
+      // Sync button text between header and sidebar
+      function syncAnimateButton() {
+        if (sidebarAnimateBtn && headerAnimateBtn) {
+          headerAnimateBtn.querySelector('span').textContent = sidebarAnimateBtn.textContent.trim();
+        }
+      }
+
+      // Header animate button triggers sidebar animate button
+      if (headerAnimateBtn && sidebarAnimateBtn) {
+        headerAnimateBtn.addEventListener('click', () => {
+          sidebarAnimateBtn.click();
+          setTimeout(syncAnimateButton, 50);
+        });
+      }
+
+      // Header rewind button triggers sidebar rewind button
+      if (headerRewindBtn && sidebarRewindBtn) {
+        headerRewindBtn.addEventListener('click', () => {
+          sidebarRewindBtn.click();
+          setTimeout(syncAnimateButton, 50);
+        });
+      }
+
+      // Watch for changes to sidebar button text and sync
+      if (sidebarAnimateBtn) {
+        const observer = new MutationObserver(syncAnimateButton);
+        observer.observe(sidebarAnimateBtn, { childList: true, subtree: true });
+      }
+    });
   </script>
   <script type="module" src="{% static 'viewer/js/main.js' %}"></script>
 </body>

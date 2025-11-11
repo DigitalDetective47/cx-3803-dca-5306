@@ -1,3 +1,4 @@
+from __future__ import annotations
 from collections.abc import Iterator, MutableSet, Sequence
 from copy import copy
 from itertools import chain, pairwise, product

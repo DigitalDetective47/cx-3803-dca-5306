@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Truck Loading Tetris</title>
+  <title>Truck Loading Tetris - Dashboard</title>
   <style>
     * {
       margin: 0;
@@ -13,336 +13,387 @@
     }
 
     body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f7fa;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
     }
 
-    .container {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-      padding: 40px;
-      max-width: 800px;
+    .header h1 {
+      color: #1f2937;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 32px;
+      max-width: 1400px;
       width: 100%;
+      margin: 0 auto;
     }
 
-    h1 {
-      color: #333;
-      margin-bottom: 10px;
-      font-size: 32px;
+    .page-header {
+      margin-bottom: 32px;
     }
 
-    .subtitle {
-      color: #666;
-      margin-bottom: 30px;
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+      color: #6b7280;
       font-size: 16px;
     }
 
-    .create-section {
-      background: #f8f9fa;
-      border: 2px dashed #ddd;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 30px;
-      text-align: center;
+    /* Layout Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
     }
 
-    .create-section h2 {
-      color: #555;
-      margin-bottom: 15px;
-      font-size: 20px;
+    @media (max-width: 1024px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Create Section */
+    .create-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+      height: fit-content;
+    }
+
+    .card-header {
+      margin-bottom: 20px;
+    }
+
+    .card-header h2 {
+      color: #1f2937;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .card-header p {
+      color: #6b7280;
+      font-size: 14px;
     }
 
     .create-form {
       display: flex;
       flex-direction: column;
-      gap: 15px;
-      max-width: 500px;
-      margin: 0 auto;
+      gap: 16px;
     }
 
-    .create-form input[type="text"] {
-      padding: 12px 16px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
       font-size: 14px;
-      width: 100%;
+      font-weight: 500;
+      color: #374151;
     }
 
-    .create-form input[type="text"]:focus {
+    .form-group input[type="text"] {
+      padding: 10px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .form-group input[type="text"]:focus {
       outline: none;
-      border-color: #4CAF50;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
     .file-input-wrapper {
       position: relative;
-      overflow: hidden;
-      display: inline-block;
-      width: 100%;
     }
 
     .file-input-wrapper input[type=file] {
       position: absolute;
-      left: -9999px;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
     }
 
     .file-input-label {
-      display: block;
-      padding: 12px 16px;
-      background: #f8f9fa;
-      border: 2px dashed #ddd;
-      border-radius: 6px;
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #f9fafb;
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s;
-      font-size: 14px;
-      color: #666;
+      transition: all 0.2s;
+      text-align: center;
     }
 
     .file-input-label:hover {
-      background: #e9ecef;
-      border-color: #4CAF50;
+      background: #f3f4f6;
+      border-color: #667eea;
+    }
+
+    .file-input-label svg {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 8px;
+      color: #9ca3af;
+    }
+
+    .file-input-label .file-text {
+      font-size: 14px;
+      color: #6b7280;
     }
 
     .file-selected {
-      background: #d4edda !important;
-      border-color: #4CAF50 !important;
-      color: #155724 !important;
+      background: #ede9fe !important;
+      border-color: #667eea !important;
+    }
+
+    .file-selected .file-text {
+      color: #667eea !important;
+      font-weight: 500;
     }
 
     .create-form button {
-      padding: 12px 24px;
-      background: #4CAF50;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: bold;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.2s;
+      margin-top: 4px;
     }
 
     .create-form button:hover {
-      background: #45a049;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
-    .loads-section {
-      position: relative;
+    .create-form button:active {
+      transform: translateY(0);
     }
 
-    .loads-section h2 {
-      color: #555;
-      margin-bottom: 15px;
-      font-size: 20px;
+    /* Loads Grid Section */
+    .loads-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 24px;
     }
 
-    .loads-list-wrapper {
-      position: relative;
-    }
-
-    .loads-list {
-      display: grid;
-      gap: 15px;
-      max-height: 240px;
-      overflow-y: auto;
-      padding-right: 5px;
-      transition: max-height 0.3s ease;
-    }
-
-    .loads-list.expanded {
-      max-height: none;
-    }
-
-    .loads-list::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .loads-list::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 4px;
-    }
-
-    .loads-list::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 4px;
-    }
-
-    .loads-list::-webkit-scrollbar-thumb:hover {
-      background: #555;
-    }
-
-    #expand-btn {
-      display: none;
-      margin-top: 15px;
-      padding: 10px 20px;
-      background: #2196F3;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s;
-      width: 100%;
-    }
-
-    #expand-btn:hover {
-      background: #1976D2;
-    }
-
-    #expand-btn.show {
-      display: block;
-    }
-
-    .load-item {
-      background: #f8f9fa;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 20px;
-      cursor: pointer;
-      transition: all 0.3s;
+    .loads-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 20px;
     }
 
-    .load-item:hover {
-      background: #e8f5e9;
-      border-color: #4CAF50;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
-    }
-
-    .load-info h3 {
-      color: #333;
-      margin-bottom: 5px;
+    .loads-header h2 {
+      color: #1f2937;
       font-size: 18px;
+      font-weight: 600;
     }
 
-    .load-info p {
-      color: #666;
+    .loads-count {
+      background: #f3f4f6;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .loads-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .load-card {
+      background: #fafafa;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .load-card:hover {
+      background: white;
+      border-color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(102, 126, 234, 0.15);
+    }
+
+    .load-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .load-card h3 {
+      color: #111827;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .load-card .load-date {
+      color: #6b7280;
       font-size: 13px;
     }
 
-    .load-arrow {
-      color: #4CAF50;
-      font-size: 24px;
+    .load-card .load-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
       font-weight: bold;
+      font-size: 16px;
+      flex-shrink: 0;
     }
 
     .empty-state {
       text-align: center;
-      padding: 40px;
-      color: #999;
+      padding: 60px 20px;
+      color: #9ca3af;
+    }
+
+    .empty-state-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      color: #6b7280;
+      margin-bottom: 8px;
     }
 
     .empty-state p {
-      font-size: 16px;
-    }
-
-    .message {
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 20px;
       font-size: 14px;
-      display: none;
+      color: #9ca3af;
     }
 
-    .message.success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-
-    .message.error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-
-
-    .modal-content {
-      background: white;
-      border-radius: 12px;
-      padding: 30px;
-      max-width: 400px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-      text-align: center;
-    }
-
-    .modal-content h3 {
-      margin: 0 0 20px 0;
-      color: #333;
-      font-size: 20px;
-    }
-
-    .modal-buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 25px;
-    }
-
-    .modal-buttons button {
-      flex: 1;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    /* Delete modal */
+    /* Delete button on card */
     .delete-btn {
-      background: transparent;
-      border: none;
-      color: #f44336;
-      font-size: 30px;
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      color: #ef4444;
+      font-size: 18px;
       font-weight: bold;
       cursor: pointer;
-      transition: color 0.3s;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      z-index: 10;
+    }
+
+    .load-card:hover .delete-btn {
+      opacity: 1;
     }
 
     .delete-btn:hover {
-      color: #d32f2f;
-    }
-    .modal-delete-confirm {
-      background: #f44336;
-      color: white;
-      flex: 1;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s;
+      background: #fef2f2;
+      border-color: #ef4444;
+      transform: scale(1.1);
     }
 
-    .modal-delete-confirm:hover {
-        background: #d32f2f;
-    }
-    .modal-cancel {
-      background: #f0f0f0;
-      color: #333;
-      flex: 1;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 6px;
+    /* Message */
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
       font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s;
+      display: none;
+      font-weight: 500;
     }
 
-    .modal-cancel:hover {
-      background: #e0e0e0;
+    .message.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
     }
+
+    .message.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+
+    /* Modal */
     #delete-modal {
       position: fixed;
       top: 0;
@@ -353,42 +404,128 @@
       align-items: center;
       justify-content: center;
       background: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
+      backdrop-filter: blur(2px);
+      z-index: 2000;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 440px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .modal-content h3 {
+      margin: 0 0 24px 0;
+      color: #111827;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .modal-cancel {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .modal-cancel:hover {
+      background: #e5e7eb;
+    }
+
+    .modal-delete-confirm {
+      background: #ef4444;
+      color: white;
+    }
+
+    .modal-delete-confirm:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Truck Loading Tetris</h1>
-    <p class="subtitle">Select a load to view or create a new one</p>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">T</div>
+      <h1>Truck Loading Tetris</h1>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-header">
+      <h2 class="page-title">Dashboard</h2>
+      <p class="page-subtitle">Manage your truck loading simulations</p>
+    </div>
 
     <div id="message" class="message"></div>
 
-    <div class="create-section">
-      <h2>Create New Load</h2>
-      <form class="create-form" id="create-load-form">
-        <input type="text" id="load-name" name="name" placeholder="Enter Load Name" required>
-        <div class="file-input-wrapper">
-          <input type="file" id="csv-file" name="csv_file" accept=".csv">
-          <label for="csv-file" class="file-input-label" id="file-label">
-            Choose CSV File (Required)
-          </label>
+    <div class="dashboard-grid">
+      <!-- Create Load Card -->
+      <div class="create-card">
+        <div class="card-header">
+          <h2>Create New Load</h2>
+          <p>Import a CSV file to start a new simulation</p>
         </div>
-        <button type="submit">Create Load with CSV</button>
-      </form>
-    </div>
+        <form class="create-form" id="create-load-form">
+          <div class="form-group">
+            <label for="load-name">Load Name</label>
+            <input type="text" id="load-name" name="name" placeholder="Enter a name for this load" required>
+          </div>
+          <div class="form-group">
+            <label>CSV File</label>
+            <div class="file-input-wrapper">
+              <input type="file" id="csv-file" name="csv_file" accept=".csv">
+              <label for="csv-file" class="file-input-label" id="file-label">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <span class="file-text">Choose CSV file or drag and drop</span>
+              </label>
+            </div>
+          </div>
+          <button type="submit">Create Load</button>
+        </form>
+      </div>
 
-    <div class="loads-section">
-      <h2>Saved Loads</h2>
-      <div class="loads-list-wrapper">
-        <div id="loads-list" class="loads-list">
+      <!-- Loads Grid Card -->
+      <div class="loads-card">
+        <div class="loads-header">
+          <h2>Your Loads</h2>
+          <span class="loads-count" id="loads-count">0 loads</span>
+        </div>
+        <div id="loads-grid" class="loads-grid">
           <div class="empty-state">
-            <p>Loading...</p>
+            <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+            <h3>No loads yet</h3>
+            <p>Create your first load to get started</p>
           </div>
         </div>
-        <button id="expand-btn" onclick="toggleExpand()">Expand All</button>
       </div>
     </div>
+  </main>
     <!-- Delete Confirmation Modal -->
     <div id="delete-modal">
       <div class="modal-content">
@@ -435,32 +572,15 @@
     // File input visual feedback
     document.getElementById('csv-file').addEventListener('change', function(e) {
       const label = document.getElementById('file-label');
+      const textSpan = label.querySelector('.file-text');
       if (e.target.files.length > 0) {
-        label.textContent = '✓ ' + e.target.files[0].name;
+        textSpan.textContent = e.target.files[0].name;
         label.classList.add('file-selected');
       } else {
-        label.textContent = 'Choose CSV File (Required)';
+        textSpan.textContent = 'Choose CSV file or drag and drop';
         label.classList.remove('file-selected');
       }
     });
-
-    // Expand/collapse toggle
-    let isExpanded = false;
-
-    function toggleExpand() {
-      const loadsList = document.getElementById('loads-list');
-      const expandBtn = document.getElementById('expand-btn');
-
-      isExpanded = !isExpanded;
-
-      if (isExpanded) {
-        loadsList.classList.add('expanded');
-        expandBtn.textContent = 'Collapse';
-      } else {
-        loadsList.classList.remove('expanded');
-        expandBtn.textContent = 'Expand All';
-      }
-    }
 
     // Load existing loads
     async function loadSimulations() {
@@ -468,36 +588,49 @@
         const response = await fetch('/api/get-simulations/');
         const data = await response.json();
 
-        const loadsList = document.getElementById('loads-list');
-        const expandBtn = document.getElementById('expand-btn');
+        const loadsGrid = document.getElementById('loads-grid');
+        const loadsCount = document.getElementById('loads-count');
 
         if (data.success && data.simulations.length > 0) {
-          loadsList.innerHTML = data.simulations.map(sim => `
-            <div class="load-item" onclick="window.location.href='/load/${sim.id}/'">
-            <button class="delete-btn" onclick="event.stopPropagation(); showDeleteModal(${sim.id}, '${sim.name}')">×</button>
+          loadsCount.textContent = `${data.simulations.length} load${data.simulations.length !== 1 ? 's' : ''}`;
 
-              <div class="load-info">
-                <h3>${sim.name}</h3>
-                <p>Created: ${new Date(sim.time).toLocaleString()}</p>
+          loadsGrid.innerHTML = data.simulations.map(sim => {
+            const initial = sim.name.charAt(0).toUpperCase();
+            const date = new Date(sim.time).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            });
+
+            return `
+              <div class="load-card" onclick="window.location.href='/load/${sim.id}/'">
+                <button class="delete-btn" onclick="event.stopPropagation(); showDeleteModal(${sim.id}, '${sim.name.replace(/'/g, "\\'")}')">×</button>
+                <div class="load-card-header">
+                  <div>
+                    <h3>${sim.name}</h3>
+                    <p class="load-date">${date}</p>
+                  </div>
+                  <div class="load-icon">${initial}</div>
+                </div>
               </div>
-              <div class="load-arrow">→</div>
-            </div>
-          `).join('');
-
-          // Show expand button only if 4+ loads
-          if (data.simulations.length >= 4) {
-            expandBtn.classList.add('show');
-          } else {
-            expandBtn.classList.remove('show');
-          }
+            `;
+          }).join('');
         } else {
-          loadsList.innerHTML = '<div class="empty-state"><p>No loads yet. Create one above!</p></div>';
-          expandBtn.classList.remove('show');
+          loadsCount.textContent = '0 loads';
+          loadsGrid.innerHTML = `
+            <div class="empty-state">
+              <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+              </svg>
+              <h3>No loads yet</h3>
+              <p>Create your first load to get started</p>
+            </div>
+          `;
         }
       } catch (error) {
         console.error('Error loading simulations:', error);
-        document.getElementById('loads-list').innerHTML = '<div class="empty-state"><p>Error loading loads.</p></div>';
-        document.getElementById('expand-btn').classList.remove('show');
+        const loadsGrid = document.getElementById('loads-grid');
+        loadsGrid.innerHTML = '<div class="empty-state"><h3>Error loading loads</h3><p>Please try refreshing the page</p></div>';
       }
     }
 
