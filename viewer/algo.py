@@ -406,5 +406,4 @@ def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
         else:
             raise ValueError("Could not fit all items!")
         placement.save()
-        print(heightmap)
-    return starting_x
+    return heightmap.x_intervals[-1].min
