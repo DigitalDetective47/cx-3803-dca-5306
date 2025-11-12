@@ -11,6 +11,7 @@ from django.db.models import (
 )
 
 from .rotation import Rotation, RotationField
+from .restrictions import Restriction, RestrictionField
 
 
 class Shipment(Model):
@@ -33,6 +34,7 @@ class HandlingUnit(Model):
     shipment = ForeignKey(Shipment, CASCADE)
     stop = CharField(max_length=3)
     temp_add = ForeignKey(Simulation, CASCADE, null=True)
+    restrictions = RestrictionField(default=Restriction(0))
 
 
 class SimPlacement(Model):
