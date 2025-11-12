@@ -556,9 +556,11 @@ if (runBtn) {
 
     if (!SIMULATION_ID) {
       console.error("No SIMULATION_ID available.");
-      alert("No simulation selected.");
+      showUserMessage("No simulation selected.", "error");
       return;
     }
+
+    showUserMessage("Running algorithm...", "info");
 
     try {
       const res = await fetch(`/api/run-algo/${SIMULATION_ID}/`, {
@@ -578,13 +580,14 @@ if (runBtn) {
       console.log("Run algo response:", data);
 
       if (res.ok && data.status === "ok") {
-        alert("Algorithm ran successfully!");
+        showUserMessage("Algorithm ran successfully!", "success");
+        setTimeout(() => location.reload(), 1500);
       } else {
-        alert("Algorithm failed. See console for details.");
+        showUserMessage("Algorithm failed. Check console for details.", "error");
       }
     } catch (err) {
       console.error("Error running algorithm:", err);
-      alert("Error running algorithm — check console.");
+      showUserMessage("Error running algorithm. Check console.", "error");
     }
   });
 } else {
@@ -619,14 +622,17 @@ async function loadConfigs() {
 }
 
 // save current simplacement to new saved configuration
-document.getElementById("saveConfigButton").addEventListener("click", async () => {
+document.getElementById("saveConfigButton").addEventListener("click", () => {
   if (!SIMULATION_ID) {
-    alert("No simulation loaded.");
+    showUserMessage("No simulation loaded.", "error");
     return;
   }
-  const name = prompt("Enter a name for this configuration:", `Config ${new Date().toLocaleString()}`);
-  if (name === null) return; // user cancelled
+  showSaveConfigModal();
+});
 
+// Handle save config action (called from modal)
+window.handleSaveConfig = async (name) => {
+  showUserMessage("Saving configuration...", "info");
   try {
     const res = await fetch(`/api/save-config/${SIMULATION_ID}/`, {
       method: "POST",
@@ -638,27 +644,35 @@ document.getElementById("saveConfigButton").addEventListener("click", async () =
     });
     const data = await res.json();
     if (data.success) {
-      alert(data.message);
+      showUserMessage(data.message || "Configuration saved successfully!", "success");
       await loadConfigs(); // refresh dropdown so new config shows up
     } else {
-      alert("Error saving configuration: " + (data.message || "unknown"));
+      showUserMessage("Error saving configuration: " + (data.message || "unknown"), "error");
     }
   } catch (err) {
     console.error("Save config error:", err);
-    alert("Error saving configuration — check console");
+    showUserMessage("Error saving configuration — check console", "error");
   }
-});
+};
 
 // load selected configuration (replace simplacements)
-document.getElementById("loadConfigButton").addEventListener("click", async () => {
+document.getElementById("loadConfigButton").addEventListener("click", () => {
   const select = document.getElementById("configSelect");
   const configId = select.value;
   if (!configId) {
-    alert("Please choose a configuration to load.");
+    showUserMessage("Please choose a configuration to load.", "error");
     return;
   }
 
-  if (!confirm("Loading this configuration will overwrite current placements. Continue?")) return;
+  // Store configId for the modal handler
+  window.pendingLoadConfigId = configId;
+  showLoadConfigModal();
+});
+
+// Handle load config action (called from modal)
+window.handleLoadConfig = async () => {
+  const configId = window.pendingLoadConfigId;
+  showUserMessage("Loading configuration...", "info");
 
   try {
     const res = await fetch(`/api/load-config/${configId}/`, {
@@ -671,16 +685,16 @@ document.getElementById("loadConfigButton").addEventListener("click", async () =
     });
     const data = await res.json();
     if (data.success) {
-      alert(data.message);
-      location.reload(); // reload the page so front-end and DB are consistent
+      showUserMessage(data.message || "Configuration loaded successfully!", "success");
+      setTimeout(() => location.reload(), 1500); // reload the page so front-end and DB are consistent
     } else {
-      alert("Error loading configuration: " + (data.message || "unknown"));
+      showUserMessage("Error loading configuration: " + (data.message || "unknown"), "error");
     }
   } catch (err) {
     console.error("Load config error:", err);
-    alert("Error loading configuration — check console");
+    showUserMessage("Error loading configuration — check console", "error");
   }
-});
+};
 
 // run once when page loads to populate list
 document.addEventListener("DOMContentLoaded", () => {

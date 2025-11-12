@@ -789,6 +789,39 @@
     </div>
   </div>
 
+  <!-- Save Configuration Prompt Modal -->
+  <div id="save-config-modal" class="modal">
+    <div class="modal-content">
+      <h3>Save Configuration</h3>
+      <p style="color: #6b7280; margin-top: 8px;">Enter a name for this configuration</p>
+      <input type="text" id="config-name-input" style="
+        width: 100%;
+        padding: 10px 12px;
+        margin-top: 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+      " placeholder="Enter configuration name">
+      <div class="modal-buttons" style="margin-top: 16px;">
+        <button class="modal-cancel" onclick="hideSaveConfigModal()">Cancel</button>
+        <button class="modal-confirm" onclick="confirmSaveConfig()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load Configuration Confirmation Modal -->
+  <div id="load-config-modal" class="modal">
+    <div class="modal-content">
+      <h3>Load Configuration?</h3>
+      <p style="color: #6b7280; margin-top: 8px;">This will overwrite current placements</p>
+      <div class="modal-buttons">
+        <button class="modal-cancel" onclick="hideLoadConfigModal()">Cancel</button>
+        <button class="modal-confirm" onclick="confirmLoadConfig()">Continue</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Include Three.js and script -->
   <script>
     // Set simulation ID for JavaScript
@@ -817,6 +850,61 @@
     // Hide delete modal
     function hideDeleteModal() {
       document.getElementById('delete-modal').classList.remove('show');
+    }
+
+    // Save Config Modal Functions
+    function showSaveConfigModal() {
+      const modal = document.getElementById('save-config-modal');
+      const input = document.getElementById('config-name-input');
+      input.value = `Config ${new Date().toLocaleString()}`;
+      modal.classList.add('show');
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 100);
+
+      // Allow Enter key to submit
+      input.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+          confirmSaveConfig();
+        }
+      };
+    }
+
+    function hideSaveConfigModal() {
+      document.getElementById('save-config-modal').classList.remove('show');
+    }
+
+    function confirmSaveConfig() {
+      const name = document.getElementById('config-name-input').value.trim();
+      if (!name) {
+        // Keep modal open and show error inline
+        document.getElementById('config-name-input').style.borderColor = '#ef4444';
+        return;
+      }
+      document.getElementById('config-name-input').style.borderColor = '#d1d5db';
+      hideSaveConfigModal();
+      // Trigger the save config action (handled in main.js)
+      if (window.handleSaveConfig) {
+        window.handleSaveConfig(name);
+      }
+    }
+
+    // Load Config Modal Functions
+    function showLoadConfigModal() {
+      document.getElementById('load-config-modal').classList.add('show');
+    }
+
+    function hideLoadConfigModal() {
+      document.getElementById('load-config-modal').classList.remove('show');
+    }
+
+    function confirmLoadConfig() {
+      hideLoadConfigModal();
+      // Trigger the load config action (handled in main.js)
+      if (window.handleLoadConfig) {
+        window.handleLoadConfig();
+      }
     }
 
     // Toggle collapsible section
