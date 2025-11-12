@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Final, Generic, Optional, Self, TypeVar, 
 from django.db.models import Q
 
 from .models import HandlingUnit, SimPlacement, Simulation
+from .restrictions import Restriction
 from .rotation import Rotation
 
 if TYPE_CHECKING:
@@ -378,7 +379,13 @@ def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
             hu=hu, sim=sim, defaults={"x": 0, "y": 0, "z": 0}
         )
         for x, z, rot in product(
-            heightmap.x_intervals, heightmap.y_intervals, Rotation
+            heightmap.x_intervals,
+            heightmap.y_intervals,
+            (
+                (Rotation.XYZ, Rotation.ZYX)
+                if Restriction.THIS_SIDE_UP in hu.restrictions
+                else Rotation
+            ),
         ):
             effective_size: tuple[float, float, float] = rot.apply(
                 (hu.x_size, hu.y_size, hu.z_size)
@@ -400,7 +407,9 @@ def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
                     Interval(x.min, x.min + effective_size[0]),
                     Interval(z.min, z.min + effective_size[2]),
                 ] = (
-                    placement.y + effective_size[1]
+                    inf
+                    if Restriction.NO_STACKING in hu.restrictions
+                    else (placement.y + effective_size[1])
                 )
                 break
         else:
