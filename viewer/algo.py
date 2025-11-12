@@ -2,6 +2,7 @@ from __future__ import annotations
 from collections.abc import Iterator, MutableSet, Sequence
 from copy import copy
 from itertools import chain, pairwise, product
+from math import inf
 from types import NotImplementedType
 from typing import TYPE_CHECKING, Any, Final, Generic, Optional, Self, TypeVar, overload
 
@@ -259,11 +260,15 @@ class Mosaic(Generic[N, T]):
             pass
 
         for x_index, y_index in product(
-            self._interval_index_helper(self.x_intervals, key[0]).indices(
-                len(self._x_boundaries) - 1
+            range(
+                *self._interval_index_helper(self.x_intervals, key[0]).indices(
+                    len(self._x_boundaries) - 1
+                )
             ),
-            self._interval_index_helper(self.y_intervals, key[1]).indices(
-                len(self._y_boundaries) - 1
+            range(
+                *self._interval_index_helper(self.y_intervals, key[1]).indices(
+                    len(self._y_boundaries) - 1
+                )
             ),
         ):
             self._grid_contents[x_index][y_index] = value
@@ -291,6 +296,13 @@ class Mosaic(Generic[N, T]):
             column.insert(interval_index, column[interval_index])
         return sliced_interval
 
+    def __str__(self) -> str:
+        ret: list[str] = ["{"]
+        for x, y in product(self.x_intervals, self.y_intervals):
+            ret.append(f"\t({x}, {y}): {self[x.min, y.min]},")
+        ret.append("}")
+        return "\n".join(ret)
+
     @property
     def x_intervals(self) -> Sequence[Interval[N]]:
         return tuple(Interval(low, high) for low, high in pairwise(self._x_boundaries))
@@ -315,7 +327,8 @@ class Mosaic(Generic[N, T]):
         if value.max <= self.x_range.max:
             while (
                 value.max not in self.x_intervals[-1]
-                and value.max == self.x_intervals[-1].min
+                and value.max != self._x_boundaries[-1]
+                or value.max == self._x_boundaries[-2]
             ):
                 del self._x_boundaries[-1]
                 del self._grid_contents[-1]
@@ -345,7 +358,8 @@ class Mosaic(Generic[N, T]):
         if value.max <= self.y_range.max:
             while (
                 value.max not in self.y_intervals[-1]
-                and value.max == self.y_intervals[-1].min
+                and value.max != self._y_boundaries[-1]
+                or value.max == self._y_boundaries[-2]
             ):
                 del self._y_boundaries[-1]
                 for column in self._grid_contents:
@@ -355,7 +369,7 @@ class Mosaic(Generic[N, T]):
 
 def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
     heightmap: Final[Mosaic[float, float]] = Mosaic(
-        0, Interval(starting_x, 53.0 * 12), Interval(-9.0 * 12, 0)
+        0, Interval(starting_x, inf), Interval(0, 9.0 * 12)
     )
     for hu in HandlingUnit.objects.filter(
         Q(temp_add=sim) | Q(temp_add__isnull=True), shipment=sim.shipment, stop=stop
@@ -379,7 +393,7 @@ def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
                 and submap[x.min, z.min] + effective_size[1] <= 8.5 * 12
             ):
                 placement.x = x.min
-                placement.x = z.min
+                placement.z = -z.min
                 placement.y = heightmap[x.min, z.min]
                 placement.orientation = rot
                 heightmap[
@@ -392,4 +406,5 @@ def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
         else:
             raise ValueError("Could not fit all items!")
         placement.save()
+        print(heightmap)
     return starting_x

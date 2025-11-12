@@ -140,6 +140,16 @@
       box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
     }
 
+    .header-btn-algo {
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      color: white;
+    }
+
+    .header-btn-algo:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    }
+
     /* Left Sidebar */
     .control-sidebar {
       position: fixed;
@@ -340,6 +350,16 @@
       box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
     }
 
+    .btn-algo {
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      color: white;
+    }
+
+    .btn-algo:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    }
+
     .btn-delete {
       background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       color: white;
@@ -422,6 +442,30 @@
       background: #fee2e2;
       color: #991b1b;
       border: 1px solid #fca5a5;
+    }
+
+    /* Config Controls */
+    .config-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .config-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .config-select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
     /* Modals */
@@ -576,6 +620,9 @@
       <button id="header-rewind-btn" class="header-btn header-btn-rewind">
         <span>Rewind</span>
       </button>
+      <button id="header-algo-btn" class="header-btn header-btn-algo">
+        <span>Run Algorithm</span>
+      </button>
     </div>
   </header>
 
@@ -607,6 +654,26 @@
             <button id="rewind-btn" class="btn-primary btn-rewind">
               <span>Rewind</span>
             </button>
+            <button id="runAlgoButton" class="btn-primary btn-algo">
+              <span>Run Algorithm</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Configuration Section -->
+      <div class="control-section">
+        <div class="section-header" onclick="toggleSection('config')">
+          <span class="section-title">Configuration</span>
+          <div class="section-toggle" id="config-toggle">+</div>
+        </div>
+        <div class="section-content collapsed" id="config-content">
+          <div class="config-controls">
+            <button id="saveConfigButton" class="btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Save Configuration</button>
+            <select id="configSelect" class="config-select">
+              <option value="">-- select saved config --</option>
+            </select>
+            <button id="loadConfigButton" class="btn-primary" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">Load Selected</button>
           </div>
         </div>
       </div>
@@ -778,8 +845,10 @@
     window.addEventListener('DOMContentLoaded', () => {
       const headerAnimateBtn = document.getElementById('header-animate-btn');
       const headerRewindBtn = document.getElementById('header-rewind-btn');
+      const headerAlgoBtn = document.getElementById('header-algo-btn');
       const sidebarAnimateBtn = document.getElementById('animate-btn');
       const sidebarRewindBtn = document.getElementById('rewind-btn');
+      const sidebarAlgoBtn = document.getElementById('runAlgoButton');
 
       // Sync button text between header and sidebar
       function syncAnimateButton() {
@@ -801,6 +870,13 @@
         headerRewindBtn.addEventListener('click', () => {
           sidebarRewindBtn.click();
           setTimeout(syncAnimateButton, 50);
+        });
+      }
+
+      // Header algorithm button triggers sidebar algorithm button
+      if (headerAlgoBtn && sidebarAlgoBtn) {
+        headerAlgoBtn.addEventListener('click', () => {
+          sidebarAlgoBtn.click();
         });
       }
 

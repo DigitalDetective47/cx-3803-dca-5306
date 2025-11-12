@@ -48,3 +48,19 @@ class SimPlacement(Model):
         constraints = (
             UniqueConstraint(fields=("hu", "sim"), name="shrodingers_placement"),
         )
+
+
+
+class SavedConfiguration(Model):
+    simulation = ForeignKey(Simulation, CASCADE)
+    name = CharField(max_length=100, default="Untitled Configuration")
+    created_at = DateTimeField(auto_now_add=True)
+
+
+class SavedPlacement(Model):
+    configuration = ForeignKey(SavedConfiguration, CASCADE, related_name="placements")
+    handling_unit = ForeignKey(HandlingUnit, CASCADE)
+    x = FloatField()
+    y = FloatField()
+    z = FloatField()
+    orientation = CharField(max_length=10, default="XYZ")
