@@ -126,11 +126,20 @@ def save_configuration(request, simulation_id):
         sim = get_object_or_404(Simulation, id=simulation_id)
         data = json.loads(request.body or "{}")
         name = data.get("name") or f"Config {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        loaded_ids = data.get("loaded_ids")
+
+        if loaded_ids is None or not isinstance(loaded_ids, list):
+            return JsonResponse({"success": False, "message": "Missing 'loaded_ids' list in request."}, status=400)
+        
 
         with transaction.atomic():
             config = SavedConfiguration.objects.create(simulation=sim, name=name)
 
-            placements = SimPlacement.objects.filter(sim=sim).select_related("hu")
+            # placements = SimPlacement.objects.filter(sim=sim).select_related("hu")
+            placements = SimPlacement.objects.filter(
+                sim=sim, 
+                hu_id__in=loaded_ids  # Filter by handling unit ID (assuming 'hu' is the foreign key)
+            ).select_related("hu")
             objs = []
             for p in placements:
                 objs.append(SavedPlacement(
@@ -148,6 +157,9 @@ def save_configuration(request, simulation_id):
         return JsonResponse({"success": True, "message": f"Configuration '{name}' saved.", "config_id": config.id})
     except Exception as e:
         return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+
 
 
 @require_http_methods(["GET"])

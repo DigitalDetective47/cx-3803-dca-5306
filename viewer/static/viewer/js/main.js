@@ -268,6 +268,7 @@ function animateRewind() {
 
 function startAnimation() {
     animQueue = toBeLoadedItems.map(item => ({
+        id: item.id,
         mesh: items.get(item.id),
         targetPos: item.targetPos,
         originalPos: items.get(item.id).userData.originalPos.clone(),
@@ -634,13 +635,24 @@ document.getElementById("saveConfigButton").addEventListener("click", () => {
 window.handleSaveConfig = async (name) => {
   showUserMessage("Saving configuration...", "info");
   try {
+    const loadedIds = loadedQueue.map(obj => obj.id);
     const res = await fetch(`/api/save-config/${SIMULATION_ID}/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         // "X-CSRFToken": getCookie("csrftoken"), // uncomment if view is protected
       },
-      body: JSON.stringify({ name })
+      // body: JSON.stringify({ name })
+      // Gather IDs of loaded items
+        
+
+        // Send to backend
+        body: JSON.stringify({ 
+          name, 
+          loaded_ids: loadedIds 
+        })
+
+
     });
     const data = await res.json();
     if (data.success) {
