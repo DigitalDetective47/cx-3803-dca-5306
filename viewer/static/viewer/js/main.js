@@ -548,7 +548,7 @@ document.getElementById('set-pos-form').addEventListener('submit', async (e) => 
 });
 
 
-// Run Algorithm button
+
 const runBtn = document.getElementById("runAlgoButton");
 if (runBtn) {
   runBtn.addEventListener("click", async () => {
@@ -590,6 +590,11 @@ if (runBtn) {
 } else {
   console.error("runAlgoButton not found in DOM");
 }
+
+
+
+
+
 
 
 // Configuration management
@@ -681,6 +686,9 @@ document.getElementById("loadConfigButton").addEventListener("click", async () =
 document.addEventListener("DOMContentLoaded", () => {
   loadConfigs();
 });
+
+
+
 
 
 
