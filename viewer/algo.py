@@ -20,6 +20,8 @@ else:
 N = TypeVar("N", bound=SupportsAllComparisons)
 T = TypeVar("T")
 
+INCHES_BETWEEN_STOPS: Final[float] = 6.0
+
 
 def compute_layout(sim: Simulation, /) -> None:
     stops: MutableSet[str] = set()
@@ -415,4 +417,4 @@ def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
         else:
             raise ValueError("Could not fit all items!")
         placement.save()
-    return heightmap.x_intervals[-1].min
+    return heightmap.x_intervals[-1].min + INCHES_BETWEEN_STOPS
