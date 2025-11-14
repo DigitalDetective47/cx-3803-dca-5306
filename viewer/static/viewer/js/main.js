@@ -82,6 +82,13 @@ function addItemToScene(item) {
 
   const mesh = new THREE.Mesh(geometry, material);
 
+  // Store original HU dimensions inside the mesh
+  mesh.userData.hu = {
+    x_size: item.x_size,
+    y_size: item.y_size,
+    z_size: item.z_size,
+  };
+
   // Position items outside the trailer
   const existingItemsCount = items.size;
   const offsetX = 1.5 * TRUCK_LENGTH + (existingItemsCount % 3) * 8; 
@@ -825,6 +832,7 @@ loadItems();
 let loadedQueue = []; // Stack for items that are finished
 let rewindItem = null;  // The item currently being animated backward
 let animationState = "STOPPED"; // Replaces booleans
+let lastPreviewHUId = null;
 
 
 // Animation loop
@@ -840,7 +848,23 @@ function animate() {
         animateItemsSequentially();
     }
   renderer.render(scene, camera);
-  
+  // Update preview only if the next HU changed
+  if (animQueue.length > 1) {
+      const next = animQueue[1];
+
+      if (lastPreviewHUId !== next.id) { 
+          const huForPreview = next.mesh.userData.hu;
+          document.getElementById('preview-iframe')
+              .contentWindow
+              .postMessage(huForPreview, '*');
+          console.log("Sending next HU to preview:", huForPreview);
+          lastPreviewHUId = next.id;
+      }
+  }
+  if (animQueue.length == 0) {
+    const iframe = document.getElementById('preview-iframe');
+    iframe.contentWindow.postMessage({ action: 'remove' }, '*');
+  }
 }
 
 animate();
