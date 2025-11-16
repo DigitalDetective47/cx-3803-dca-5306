@@ -8,6 +8,7 @@ const height = container.clientHeight;
 
 // Scene
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xffffff);
 const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
 camera.position.set(30, 12.5, 20);
 camera.lookAt(0, 0, 0);
