@@ -586,6 +586,145 @@
       color: #1e40af;
       border-color: #93c5fd;
     }
+
+    /* HU Info Panel */
+    .hu-info-panel {
+      position: fixed;
+      top: 88px;
+      right: 24px;
+      width: 320px;
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(10px);
+      padding: 24px;
+      z-index: 1500;
+      transform: translateX(150%);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .hu-info-panel.visible {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    .hu-info-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #f3f4f6;
+    }
+
+    .hu-info-title {
+      display: flex;
+      align-items: center;
+    }
+
+    .hu-info-text h3 {
+      margin: 0;
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .hu-info-id {
+      margin: 4px 0 0 0;
+      font-size: 20px;
+      color: #111827;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .hu-info-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #f3f4f6;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      color: #6b7280;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .hu-info-close:hover {
+      background: #e5e7eb;
+      color: #374151;
+      transform: rotate(90deg);
+    }
+
+    .hu-info-details {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .hu-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: #f9fafb;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .hu-info-row:hover {
+      background: #f3f4f6;
+    }
+
+    .hu-info-label {
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hu-info-value {
+      font-size: 14px;
+      color: #111827;
+      font-weight: 600;
+    }
+
+    .hu-info-actions {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 2px solid #f3f4f6;
+    }
+
+    .hu-info-delete-btn {
+      width: 100%;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .hu-info-delete-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+
+    .hu-info-delete-btn:active {
+      transform: translateY(0);
+    }
   </style>
    <script type="importmap">
   {
@@ -613,7 +752,7 @@
         <h1 class="load-title">{{ simulation.name }}</h1>
       </div>
     </div>
-    <div class="header-controls hidden" id="header-controls">
+    <div class="header-controls" id="header-controls">
       <button id="header-animate-btn" class="header-btn header-btn-animate">
         <span>Animate</span>
       </button>
@@ -627,14 +766,14 @@
   </header>
 
   <!-- Sidebar Toggle Button -->
-  <button class="sidebar-toggle-btn sidebar-open" id="sidebar-toggle-btn" onclick="toggleSidebar()">
+  <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" onclick="toggleSidebar()">
     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
     </svg>
   </button>
 
   <!-- Left Sidebar -->
-  <aside class="control-sidebar" id="control-sidebar">
+  <aside class="control-sidebar collapsed" id="control-sidebar">
     <div class="sidebar-header">
       <h2>Controls</h2>
       <button class="sidebar-close-btn" onclick="toggleSidebar()">×</button>
@@ -821,6 +960,41 @@
       </div>
     </div>
   </div>
+
+  <!-- HU Info Panel -->
+  <div id="hu-info-panel" class="hu-info-panel">
+    <div class="hu-info-header">
+      <div class="hu-info-title">
+        <div class="hu-info-text">
+          <h3>Handling Unit</h3>
+          <p class="hu-info-id" id="hu-info-id">-</p>
+        </div>
+      </div>
+      <button class="hu-info-close" onclick="hideHuInfo()">×</button>
+    </div>
+    <div class="hu-info-details">
+      <div class="hu-info-row">
+        <span class="hu-info-label">Dimensions</span>
+        <span class="hu-info-value" id="hu-info-dimensions">-</span>
+      </div>
+      <div class="hu-info-row">
+        <span class="hu-info-label">Weight</span>
+        <span class="hu-info-value" id="hu-info-weight">-</span>
+      </div>
+      <div class="hu-info-row">
+        <span class="hu-info-label">Stop</span>
+        <span class="hu-info-value" id="hu-info-stop">-</span>
+      </div>
+      <div class="hu-info-row">
+        <span class="hu-info-label">Shipment</span>
+        <span class="hu-info-value" id="hu-info-shipment">-</span>
+      </div>
+    </div>
+    <div class="hu-info-actions">
+      <button class="hu-info-delete-btn" onclick="showDeleteModal()">Delete HU</button>
+    </div>
+  </div>
+
     <!-- Next HU Box -->
     <div id="next-hu-box" style="
         position: absolute;
@@ -946,6 +1120,19 @@
       toggleBtn.classList.toggle('sidebar-open');
       headerControls.classList.toggle('hidden');
     }
+
+    // Hide HU info panel
+    function hideHuInfo() {
+      const panel = document.getElementById('hu-info-panel');
+      panel.classList.remove('visible');
+    }
+
+    // Close HU info panel on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        hideHuInfo();
+      }
+    });
 
     // Connect header buttons to sidebar buttons (after main.js loads)
     window.addEventListener('DOMContentLoaded', () => {

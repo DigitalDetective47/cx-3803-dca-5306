@@ -7,6 +7,8 @@ const TRUCK_HEIGHT = 8.5;
 const TRUCK_WIDTH = 9;
 // Store items in the scene
 const items = new Map();
+// Store item data (metadata)
+const itemData = new Map();
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xdcdcdc);
@@ -107,6 +109,7 @@ function addItemToScene(item) {
 
   scene.add(mesh);
   items.set(item.id, mesh);
+  itemData.set(item.id, item); // Store item metadata
 
   return mesh;
 }
@@ -734,6 +737,24 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let selectedItem = null;
 
+// Function to show HU info panel
+function showHuInfo(itemId) {
+  const data = itemData.get(itemId);
+  if (!data) return;
+
+  // Update panel content
+  document.getElementById('hu-info-id').textContent = data.id;
+  document.getElementById('hu-info-dimensions').textContent =
+    `${data.x_size}" × ${data.y_size}" × ${data.z_size}"`;
+  document.getElementById('hu-info-weight').textContent = `${data.weight} lbs`;
+  document.getElementById('hu-info-stop').textContent = data.stop;
+  document.getElementById('hu-info-shipment').textContent = data.shipment;
+
+  // Show panel with animation
+  const panel = document.getElementById('hu-info-panel');
+  panel.classList.add('visible');
+}
+
 renderer.domElement.addEventListener('click', (event) => {
   const rect = renderer.domElement.getBoundingClientRect();
 
@@ -762,12 +783,19 @@ renderer.domElement.addEventListener('click', (event) => {
       selectedItem.material.emissive.set(0x00ff00);
     }
 
-    console.log("Selected Item:", selectedItem.id || "(no id)");
+    // Find the item ID and show info panel
+    const itemId = [...items.entries()].find(([, m]) => m === mesh)?.[0];
+    if (itemId) {
+      console.log("Selected Item:", itemId);
+      showHuInfo(itemId);
+    }
   } else {
     if (selectedItem && selectedItem.material?.emissive) {
       selectedItem.material.emissive.set(0x000000);
     }
     selectedItem = null;
+    // Hide info panel when clicking empty space
+    document.getElementById('hu-info-panel')?.classList.remove('visible');
   }
 });
 
@@ -796,7 +824,10 @@ window.deleteSelectedItem = async function() {
       // Remove from 3D scene
       scene.remove(selectedItem);
       items.delete(itemId);
+      itemData.delete(itemId);
       selectedItem = null;
+      // Hide info panel
+      document.getElementById('hu-info-panel')?.classList.remove('visible');
       showUserMessage(result.message, "success");
     } else {
       showUserMessage(result.message || "Failed to delete item.", "error");
