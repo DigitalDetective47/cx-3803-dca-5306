@@ -480,6 +480,54 @@ document.getElementById('add-item-form').addEventListener('submit', async (e) =>
 
 
 
+// Handle set restrictions form submission
+document.getElementById('set-res-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData(e.target);
+  const data = Object.fromEntries(formData.entries());
+
+  if (typeof SIMULATION_ID !== 'undefined' && SIMULATION_ID !== null && SIMULATION_ID !== 'null') {
+    data.simulation_id = SIMULATION_ID;
+  }
+
+  const messageEl = document.getElementById('message');
+
+  try {
+    const response = await fetch('/api/set-restrictions/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      messageEl.textContent = result.message;
+      messageEl.className = 'message success';
+      messageEl.style.display = 'block';
+
+      e.target.reset();
+
+      setTimeout(() => {
+        messageEl.style.display = 'none';
+      }, 3000);
+    } else {
+      messageEl.textContent = result.message;
+      messageEl.className = 'message error';
+      messageEl.style.display = 'block';
+    }
+  } catch (error) {
+    messageEl.textContent = 'Error setting restrictions. Please try again.';
+    messageEl.className = 'message error';
+    messageEl.style.display = 'block';
+  }
+});
+
+
+
 const ALLOWED_ROTATIONS = ["XYZ", "XZY", "YXZ", "YZX", "ZXY", "ZYX"];
 // Handle "Set Position" form submission
 document.getElementById('set-pos-form').addEventListener('submit', async (e) => {

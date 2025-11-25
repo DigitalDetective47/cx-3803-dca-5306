@@ -9,6 +9,7 @@ import csv
 import io
 from .models import HandlingUnit, Shipment, Simulation, SimPlacement, SavedConfiguration, SavedPlacement
 from .algo import compute_layout
+from .restrictions import Restriction
 
 def load_selection(request):
     # Landing page showing all loads
@@ -211,6 +212,66 @@ def load_configuration(request, config_id):
     except Exception as e:
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
+
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def set_restrictions(request):
+    """
+    Create or update a SimPlacement entry for an existing HandlingUnit.
+    Expected JSON payload:
+    {
+        "id": "HU123",
+        "no_stacking": True,
+        "this_side_up": False
+    }
+    """
+    try:
+        data = json.loads(request.body)
+
+        hu_id = data.get("id")
+
+        if not hu_id:
+            return JsonResponse({
+                "success": False,
+                "message": "Missing Handling Unit ID."
+            }, status=400)
+
+        # Check that the HU exists first
+        hu_exists = HandlingUnit.objects.filter(id=hu_id).exists()
+        if not hu_exists:
+            return JsonResponse({
+                "success": False,
+                "message": f"Cannot set restrictions: Handling Unit ID '{hu_id}' does not exist."
+            }, status=400)
+
+        # Retrieve the actual instances
+        hu = HandlingUnit.objects.get(id=hu_id)
+
+        hu.restrictions = Restriction(0)
+        if data.get("no_stacking"):
+            hu.restrictions |= Restriction.NO_STACKING
+        if data.get("this_side_up"):
+            hu.restrictions |= Restriction.THIS_SIDE_UP
+        hu.save()
+
+        return JsonResponse({
+            "success": True,
+            "message": (
+                f"Updated HU '{hu.id}'"
+            ),
+            "placement": {
+                "hu": hu.id,
+                "restrictions": hu.restrictions.value,
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "message": f"Error setting restrictions: {str(e)}"
+        }, status=400)
 
 
 
