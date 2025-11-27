@@ -503,7 +503,7 @@ def create_load_with_csv(request):
     except Exception as e:
         return JsonResponse({
             'success': False,
-            'message': f'Error creating load: {str(e)}'
+            'message': 'Unable to create load. Please check your CSV file and try again.'
         }, status=400)
     
 @csrf_exempt
