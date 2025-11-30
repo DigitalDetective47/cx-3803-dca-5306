@@ -259,6 +259,27 @@
     .control-section {
       margin-bottom: 24px;
     }
+    
+/* Stop Legend Styling */
+.legend-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: inline-block;
+  border: 1px solid #d1d5db;
+}
+
+.legend-label {
+  font-size: 14px;
+  color: #374151;
+}
 
     .control-section:has(.btn-delete) {
       display: flex;
@@ -468,6 +489,28 @@
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
+    /* Stop Legend */
+    .legend-entry {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1px solid #d1d5db;
+      flex-shrink: 0;
+    }
+
+    .legend-label {
+      flex: 1;
+    }
+
     /* Modals */
     .modal {
       display: none;
@@ -641,32 +684,35 @@
     </div>
     <div class="sidebar-content">
 
-      <!-- Animation Section -->
-      <div class="control-section">
-        <div class="section-header">
-          <span class="section-title">Animation</span>
-        </div>
-        <div class="section-content">
-          <div class="animation-buttons">
-            <button id="animate-btn" class="btn-primary btn-animate">
-              <span>Animate</span>
-            </button>
-            <button id="rewind-btn" class="btn-primary btn-rewind">
-              <span>Rewind</span>
-            </button>
-            <button id="runAlgoButton" class="btn-primary btn-algo">
-              <span>Run Algorithm</span>
-            </button>
-          </div>
-        </div>
-      </div>
+  <!-- Animation Section -->
+<div class="control-section">
+  <div class="section-header">
+    <span class="section-title">Animation</span>
+  </div>
+  <div class="section-content">
+    <div class="animation-buttons">
+      <button id="animate-btn" class="btn-primary btn-animate"><span>Animate</span></button>
+      <button id="rewind-btn" class="btn-primary btn-rewind"><span>Rewind</span></button>
+      <button id="runAlgoButton" class="btn-primary btn-algo"><span>Run Algorithm</span></button>
+    </div>
+  </div>
+</div>
 
-      <!-- Configuration Section -->
-      <div class="control-section">
-        <div class="section-header" onclick="toggleSection('config')">
-          <span class="section-title">Configuration</span>
-          <div class="section-toggle" id="config-toggle">+</div>
-        </div>
+<!-- Stop Legend Section -->
+<div class="control-section">
+  <div class="section-header">
+    <span class="section-title">Stop Legend</span>
+  </div>
+  <div class="section-content" id="stop-legend">
+  </div>
+</div>
+
+<!-- Configuration Section -->
+<div class="control-section">
+  <div class="section-header" onclick="toggleSection('config')">
+    <span class="section-title">Configuration</span>
+    <div class="section-toggle" id="config-toggle">+</div>
+  </div>
         <div class="section-content collapsed" id="config-content">
           <div class="config-controls">
             <button id="saveConfigButton" class="btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Save Configuration</button>
