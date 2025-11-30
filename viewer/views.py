@@ -213,6 +213,19 @@ def load_configuration(request, config_id):
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_configuration(request, config_id):
+    """
+    Delete a saved configuration and its associated placements.
+    """
+    try:
+        config = get_object_or_404(SavedConfiguration, id=config_id)
+        config_name = config.name
+        config.delete()
+        return JsonResponse({"success": True, "message": f"Configuration '{config_name}' deleted."})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
 @csrf_exempt
@@ -564,7 +577,7 @@ def create_load_with_csv(request):
     except Exception as e:
         return JsonResponse({
             'success': False,
-            'message': f'Error creating load: {str(e)}'
+            'message': 'Unable to create load. Please check your CSV file and try again.'
         }, status=400)
     
 @csrf_exempt

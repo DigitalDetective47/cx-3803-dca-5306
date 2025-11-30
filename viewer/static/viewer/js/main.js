@@ -7,6 +7,8 @@ const TRUCK_HEIGHT = 8.5;
 const TRUCK_WIDTH = 9;
 // Store items in the scene
 const items = new Map();
+// Store item data (metadata)
+const itemData = new Map();
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xdcdcdc);
@@ -82,6 +84,13 @@ function addItemToScene(item) {
 
   const mesh = new THREE.Mesh(geometry, material);
 
+  // Store original HU dimensions inside the mesh
+  mesh.userData.hu = {
+    x_size: item.x_size,
+    y_size: item.y_size,
+    z_size: item.z_size,
+  };
+
   // Position items outside the trailer
   const existingItemsCount = items.size;
   const offsetX = 1.5 * TRUCK_LENGTH + (existingItemsCount % 3) * 8; 
@@ -100,6 +109,7 @@ function addItemToScene(item) {
 
   scene.add(mesh);
   items.set(item.id, mesh);
+  itemData.set(item.id, item); // Store item metadata
 
   return mesh;
 }
@@ -756,6 +766,45 @@ window.handleLoadConfig = async () => {
   }
 };
 
+// delete selected configuration
+document.getElementById("deleteConfigButton").addEventListener("click", () => {
+  const select = document.getElementById("configSelect");
+  const configId = select.value;
+  if (!configId) {
+    showUserMessage("Please select a configuration to delete.", "error");
+    return;
+  }
+
+  // Store configId for the modal handler
+  window.pendingDeleteConfigId = configId;
+  showDeleteConfigModal();
+});
+
+// Handle delete config action (called from modal)
+window.handleDeleteConfig = async () => {
+  const configId = window.pendingDeleteConfigId;
+  showUserMessage("Deleting configuration...", "info");
+
+  try {
+    const res = await fetch(`/api/delete-config/${configId}/`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showUserMessage(data.message || "Configuration deleted successfully!", "success");
+      await loadConfigs(); // refresh dropdown
+    } else {
+      showUserMessage("Error deleting configuration: " + (data.message || "unknown"), "error");
+    }
+  } catch (err) {
+    console.error("Delete config error:", err);
+    showUserMessage("Error deleting configuration — check console", "error");
+  }
+};
+
 // run once when page loads to populate list
 document.addEventListener("DOMContentLoaded", () => {
   loadConfigs();
@@ -774,6 +823,24 @@ document.addEventListener("DOMContentLoaded", () => {
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let selectedItem = null;
+
+// Function to show HU info panel
+function showHuInfo(itemId) {
+  const data = itemData.get(itemId);
+  if (!data) return;
+
+  // Update panel content
+  document.getElementById('hu-info-id').textContent = data.id;
+  document.getElementById('hu-info-dimensions').textContent =
+    `${data.x_size}" × ${data.y_size}" × ${data.z_size}"`;
+  document.getElementById('hu-info-weight').textContent = `${data.weight} lbs`;
+  document.getElementById('hu-info-stop').textContent = data.stop;
+  document.getElementById('hu-info-shipment').textContent = data.shipment;
+
+  // Show panel with animation
+  const panel = document.getElementById('hu-info-panel');
+  panel.classList.add('visible');
+}
 
 renderer.domElement.addEventListener('click', (event) => {
   const rect = renderer.domElement.getBoundingClientRect();
@@ -803,12 +870,19 @@ renderer.domElement.addEventListener('click', (event) => {
       selectedItem.material.emissive.set(0x00ff00);
     }
 
-    console.log("Selected Item:", selectedItem.id || "(no id)");
+    // Find the item ID and show info panel
+    const itemId = [...items.entries()].find(([, m]) => m === mesh)?.[0];
+    if (itemId) {
+      console.log("Selected Item:", itemId);
+      showHuInfo(itemId);
+    }
   } else {
     if (selectedItem && selectedItem.material?.emissive) {
       selectedItem.material.emissive.set(0x000000);
     }
     selectedItem = null;
+    // Hide info panel when clicking empty space
+    document.getElementById('hu-info-panel')?.classList.remove('visible');
   }
 });
 
@@ -837,7 +911,10 @@ window.deleteSelectedItem = async function() {
       // Remove from 3D scene
       scene.remove(selectedItem);
       items.delete(itemId);
+      itemData.delete(itemId);
       selectedItem = null;
+      // Hide info panel
+      document.getElementById('hu-info-panel')?.classList.remove('visible');
       showUserMessage(result.message, "success");
     } else {
       showUserMessage(result.message || "Failed to delete item.", "error");
@@ -873,6 +950,7 @@ loadItems();
 let loadedQueue = []; // Stack for items that are finished
 let rewindItem = null;  // The item currently being animated backward
 let animationState = "STOPPED"; // Replaces booleans
+let lastPreviewHUId = null;
 
 
 // Animation loop
@@ -888,7 +966,23 @@ function animate() {
         animateItemsSequentially();
     }
   renderer.render(scene, camera);
-  
+  // Update preview only if the next HU changed
+  if (animQueue.length > 1) {
+      const next = animQueue[1];
+
+      if (lastPreviewHUId !== next.id) { 
+          const huForPreview = next.mesh.userData.hu;
+          document.getElementById('preview-iframe')
+              .contentWindow
+              .postMessage(huForPreview, '*');
+          console.log("Sending next HU to preview:", huForPreview);
+          lastPreviewHUId = next.id;
+      }
+  }
+  if (animQueue.length == 0) {
+    const iframe = document.getElementById('preview-iframe');
+    iframe.contentWindow.postMessage({ action: 'remove' }, '*');
+  }
 }
 
 animate();
