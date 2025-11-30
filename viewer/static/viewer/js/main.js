@@ -718,6 +718,45 @@ window.handleLoadConfig = async () => {
   }
 };
 
+// delete selected configuration
+document.getElementById("deleteConfigButton").addEventListener("click", () => {
+  const select = document.getElementById("configSelect");
+  const configId = select.value;
+  if (!configId) {
+    showUserMessage("Please select a configuration to delete.", "error");
+    return;
+  }
+
+  // Store configId for the modal handler
+  window.pendingDeleteConfigId = configId;
+  showDeleteConfigModal();
+});
+
+// Handle delete config action (called from modal)
+window.handleDeleteConfig = async () => {
+  const configId = window.pendingDeleteConfigId;
+  showUserMessage("Deleting configuration...", "info");
+
+  try {
+    const res = await fetch(`/api/delete-config/${configId}/`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showUserMessage(data.message || "Configuration deleted successfully!", "success");
+      await loadConfigs(); // refresh dropdown
+    } else {
+      showUserMessage("Error deleting configuration: " + (data.message || "unknown"), "error");
+    }
+  } catch (err) {
+    console.error("Delete config error:", err);
+    showUserMessage("Error deleting configuration — check console", "error");
+  }
+};
+
 // run once when page loads to populate list
 document.addEventListener("DOMContentLoaded", () => {
   loadConfigs();

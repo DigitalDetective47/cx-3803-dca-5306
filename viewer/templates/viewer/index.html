@@ -813,6 +813,7 @@
               <option value="">-- select saved config --</option>
             </select>
             <button id="loadConfigButton" class="btn-primary" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">Load Selected</button>
+            <button id="deleteConfigButton" class="btn-primary" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white;">Delete Selected</button>
           </div>
         </div>
       </div>
@@ -961,6 +962,18 @@
     </div>
   </div>
 
+  <!-- Delete Configuration Confirmation Modal -->
+  <div id="delete-config-modal" class="modal">
+    <div class="modal-content">
+      <h3>Delete Configuration?</h3>
+      <p style="color: #6b7280; margin-top: 8px;">This action cannot be undone</p>
+      <div class="modal-buttons">
+        <button class="modal-cancel" onclick="hideDeleteConfigModal()">Cancel</button>
+        <button class="modal-confirm" onclick="confirmDeleteConfig()">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <!-- HU Info Panel -->
   <div id="hu-info-panel" class="hu-info-panel">
     <div class="hu-info-header">
@@ -1096,6 +1109,23 @@
       // Trigger the load config action (handled in main.js)
       if (window.handleLoadConfig) {
         window.handleLoadConfig();
+      }
+    }
+
+    // Delete Config Modal Functions
+    function showDeleteConfigModal() {
+      document.getElementById('delete-config-modal').classList.add('show');
+    }
+
+    function hideDeleteConfigModal() {
+      document.getElementById('delete-config-modal').classList.remove('show');
+    }
+
+    function confirmDeleteConfig() {
+      hideDeleteConfigModal();
+      // Trigger the delete config action (handled in main.js)
+      if (window.handleDeleteConfig) {
+        window.handleDeleteConfig();
       }
     }
 

@@ -18,5 +18,6 @@ urlpatterns = [
     path("api/save-config/<int:simulation_id>/", views.save_configuration, name="save_configuration"),
     path("api/list-configs/<int:simulation_id>/", views.list_configurations, name="list_configurations"),
     path("api/load-config/<int:config_id>/", views.load_configuration, name="load_configuration"),
+    path("api/delete-config/<int:config_id>/", views.delete_configuration, name="delete_configuration"),
 
 ]

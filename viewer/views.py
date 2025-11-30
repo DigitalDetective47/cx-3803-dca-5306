@@ -212,6 +212,19 @@ def load_configuration(request, config_id):
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_configuration(request, config_id):
+    """
+    Delete a saved configuration and its associated placements.
+    """
+    try:
+        config = get_object_or_404(SavedConfiguration, id=config_id)
+        config_name = config.name
+        config.delete()
+        return JsonResponse({"success": True, "message": f"Configuration '{config_name}' deleted."})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
 
