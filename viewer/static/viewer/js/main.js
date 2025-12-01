@@ -9,36 +9,35 @@ const TRUCK_WIDTH = 9;
 const items = new Map();
 
 const DEFAULT_STOP_COLOR = '#9ca3af';
-
-const BASE_STOP_COLORS = {
-  '1A': '#3b82f6', // blue
-  '2A': '#22c55e', // green
-  '3A': '#f97316', // orange
-  '4A': '#a855f7', // purple
-};
-
 let STOP_COLOR_MAP = {};
 
-function getColorForStop(stopRaw) {
-  const stop = String(stopRaw || '').trim();   
+// Prefer backend color; fall back to map/default
+function getColorForStop(item) {
+  const backendColor = (item.color || '').trim();
+  if (backendColor) return backendColor;
+
+  const stop = String(item.stop || '').trim();
   if (!stop) return DEFAULT_STOP_COLOR;
-  return BASE_STOP_COLORS[stop] || DEFAULT_STOP_COLOR;
+  return STOP_COLOR_MAP[stop] || DEFAULT_STOP_COLOR;
 }
 
 function buildStopColorMap(items) {
-  const legendMap = {};
+  const map = {};
 
   for (const item of items) {
     const stop = String(item.stop || '').trim();
     if (!stop) continue;
 
-    if (BASE_STOP_COLORS[stop] && !legendMap[stop]) {
-      legendMap[stop] = BASE_STOP_COLORS[stop];
+    const color = (item.color || '').trim() || DEFAULT_STOP_COLOR;
+
+    if (!map[stop]) {
+      map[stop] = color;
     }
   }
 
-  STOP_COLOR_MAP = legendMap;
+  STOP_COLOR_MAP = map;
 }
+
 
 
 function updateStopLegend() {
@@ -127,7 +126,8 @@ window.addEventListener('resize', () => {
 
 // Function to add item to 3D scene
 function addItemToScene(item) {
- const color = getColorForStop(item.stop);
+  const color = getColorForStop(item);
+
 
   const geometry = new THREE.BoxGeometry(
     item.x_size / 12,

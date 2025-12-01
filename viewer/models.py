@@ -33,6 +33,7 @@ class HandlingUnit(Model):
     z_size = FloatField()
     shipment = ForeignKey(Shipment, CASCADE)
     stop = CharField(max_length=3)
+    color = CharField(max_length=7, blank=True, null=True)
     temp_add = ForeignKey(Simulation, CASCADE, null=True)
     restrictions = RestrictionField(default=Restriction(0))
 
