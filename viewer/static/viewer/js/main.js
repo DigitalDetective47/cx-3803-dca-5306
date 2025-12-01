@@ -10,6 +10,61 @@ const items = new Map();
 // Store item data (metadata)
 const itemData = new Map();
 
+const DEFAULT_STOP_COLOR = '#9ca3af';
+let STOP_COLOR_MAP = {};
+
+// Prefer backend color; fall back to map/default
+function getColorForStop(item) {
+  const backendColor = (item.color || '').trim();
+  if (backendColor) return backendColor;
+
+  const stop = String(item.stop || '').trim();
+  if (!stop) return DEFAULT_STOP_COLOR;
+  return STOP_COLOR_MAP[stop] || DEFAULT_STOP_COLOR;
+}
+
+function buildStopColorMap(items) {
+  const map = {};
+
+  for (const item of items) {
+    const stop = String(item.stop || '').trim();
+    if (!stop) continue;
+
+    const color = (item.color || '').trim() || DEFAULT_STOP_COLOR;
+
+    if (!map[stop]) {
+      map[stop] = color;
+    }
+  }
+
+  STOP_COLOR_MAP = map;
+}
+
+
+
+function updateStopLegend() {
+  const legendEl = document.getElementById('stop-legend');
+  if (!legendEl) return;
+
+  const entries = Object.entries(STOP_COLOR_MAP).sort(
+    ([a], [b]) => a.localeCompare(b)
+  );
+
+  if (!entries.length) {
+    legendEl.innerHTML = '<p class="legend-empty">No stops loaded yet</p>';
+    return;
+  }
+
+  legendEl.innerHTML = entries.map(([stop, color]) => `
+    <div class="legend-row">
+      <span class="legend-color" style="background:${color};"></span>
+      <span class="legend-label">Stop ${stop}</span>
+    </div>
+  `).join('');
+}
+
+
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xdcdcdc);
 
@@ -73,9 +128,14 @@ window.addEventListener('resize', () => {
 
 // Function to add item to 3D scene
 function addItemToScene(item) {
-  const color = new THREE.Color(Math.random(), Math.random(), Math.random());
+  const color = getColorForStop(item);
 
-  const geometry = new THREE.BoxGeometry(item.x_size / 12, item.y_size / 12, item.z_size / 12);
+
+  const geometry = new THREE.BoxGeometry(
+    item.x_size / 12,
+    item.y_size / 12,
+    item.z_size / 12
+  );
   const material = new THREE.MeshStandardMaterial({
     color: color,
     transparent: true,
@@ -84,22 +144,15 @@ function addItemToScene(item) {
 
   const mesh = new THREE.Mesh(geometry, material);
 
-  // Store original HU dimensions inside the mesh
-  mesh.userData.hu = {
-    x_size: item.x_size,
-    y_size: item.y_size,
-    z_size: item.z_size,
-  };
-
   // Position items outside the trailer
-  const existingItemsCount = items.size;
-  const offsetX = 1.5 * TRUCK_LENGTH + (existingItemsCount % 3) * 8; 
-  const offsetY = item.y_size / 2 + 2; 
+    const existingItemsCount = items.size;
+  const offsetX = 1.5 * TRUCK_LENGTH + (existingItemsCount % 3) * 8;
+  const offsetY = item.y_size / 2 + 2;
   const offsetZ = Math.floor(existingItemsCount / 3) * 6 - 6;
 
   mesh.position.set(offsetX, offsetY, offsetZ);
   mesh.userData.originalPos = mesh.position.clone();
-  
+
   const edges = new THREE.EdgesGeometry(geometry);
   const outline = new THREE.LineSegments(
     edges,
@@ -126,13 +179,18 @@ async function loadItems() {
     const response = await fetch(url);
     const data = await response.json();
 
-    if (data.success) {
-      data.items.forEach(item => {
-        if (!items.has(item.id)) {
-          addItemToScene(item);
-        }
-      });
+const itemsList = data.items || [];
+
+buildStopColorMap(itemsList);
+updateStopLegend();
+
+if (data.success) {
+  itemsList.forEach(item => {
+    if (!items.has(item.id)) {
+      addItemToScene(item);
     }
+  });
+}
   } catch (error) {
     console.error('Error loading items:', error);
   }

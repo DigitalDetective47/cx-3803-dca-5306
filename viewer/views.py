@@ -11,6 +11,19 @@ from .models import HandlingUnit, Shipment, Simulation, SimPlacement, SavedConfi
 from .algo import compute_layout
 from .restrictions import Restriction
 
+STOP_COLOR_MAP = {
+    "1A": "#3b82f6",  # blue
+    "2A": "#22c55e",  # green
+    "3A": "#f97316",  # orange
+    "4A": "#a855f7",  # purple
+}
+
+DEFAULT_STOP_COLOR = "#9ca3af"  # grey for anything else
+
+def color_for_stop(stop_raw):
+    s = (stop_raw or "").strip()
+    return STOP_COLOR_MAP.get(s, DEFAULT_STOP_COLOR)
+
 def load_selection(request):
     # Landing page showing all loads
     return render(request, 'viewer/load_selection.html')
@@ -48,6 +61,7 @@ def delete_load(request, load_id):
 def add_item(request):
     try:
         data = json.loads(request.body)
+        stop_value = (data.get("stop") or "").strip()
 
         simulation = None
         if 'simulation_id' in data and data['simulation_id']:
@@ -65,7 +79,8 @@ def add_item(request):
             y_size=float(data['y_size']),
             z_size=float(data['z_size']),
             shipment=shipment,
-            stop=data['stop'],
+            stop=stop_value,
+            color=color_for_stop(stop_value),
             temp_add=simulation
         )
     #     SimPlacement.objects.get_or_create(
@@ -100,7 +115,8 @@ def add_item(request):
                 'y_size': item.y_size,
                 'z_size': item.z_size,
                 'shipment': item.shipment.id,
-                'stop': item.stop
+                'stop': item.stop,
+                'color': item.color,
             }
         })
     except Exception as e:
@@ -400,12 +416,13 @@ def get_items(request):
 
         if simulation_id:
             items = HandlingUnit.objects.filter(temp_add_id=simulation_id).values(
-                'id', 'weight', 'x_size', 'y_size', 'z_size', 'shipment', 'stop'
+                'id', 'weight', 'x_size', 'y_size', 'z_size', 'shipment', 'stop', 'color'
             )
         else:
             items = HandlingUnit.objects.all().values(
-                'id', 'weight', 'x_size', 'y_size', 'z_size', 'shipment', 'stop'
+                'id', 'weight', 'x_size', 'y_size', 'z_size', 'shipment', 'stop', 'color'
             )
+
 
         return JsonResponse({
             'success': True,
@@ -548,6 +565,7 @@ def create_load_with_csv(request):
                 )
 
                 simulation, _ = Simulation.objects.get_or_create(name=load_name, shipment=shipment)
+                stop_value = (row.get('Stop') or '').strip()
 
                 HandlingUnit.objects.create(
                     id=row['HU Number'],
@@ -556,7 +574,8 @@ def create_load_with_csv(request):
                     y_size=float(row['Width']),
                     z_size=float(row['Height']),
                     shipment=shipment,
-                    stop=row['Stop'],
+                    stop=stop_value,
+                    color=color_for_stop(stop_value),
                     temp_add=simulation
                 )
                 items_created += 1
