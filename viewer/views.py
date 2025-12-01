@@ -31,7 +31,6 @@ def load_selection(request):
 @csrf_exempt
 def run_algo(request, simulation_id):
     simulation = get_object_or_404(Simulation, id=simulation_id)
-    print("here")
     compute_layout(simulation)
 
     return JsonResponse({"status": "ok"})
@@ -71,6 +70,9 @@ def add_item(request):
             id=data['shipment'],
             defaults={'name': f"Shipment {data['shipment']}"}
         )
+
+        if not float(data['x_size']) or not float(data['y_size']) or not float(data['z_size']):
+            raise ValueError
 
         item = HandlingUnit.objects.create(
             id=data['id'],
@@ -566,6 +568,9 @@ def create_load_with_csv(request):
 
                 simulation, _ = Simulation.objects.get_or_create(name=load_name, shipment=shipment)
                 stop_value = (row.get('Stop') or '').strip()
+
+                if not float(row['Length']) or not float(row['Width']) or not float(row['Height']):
+                    continue
 
                 HandlingUnit.objects.create(
                     id=row['HU Number'],

@@ -33,7 +33,7 @@ def compute_layout(sim: Simulation, /) -> None:
     ):
         stops.add(hu.stop)
     base_x: float = 0.0
-    for stop in sorted(stops):
+    for stop in sorted(stops, reverse=True):
         base_x = compute_stop(sim, stop, base_x)
 
 
@@ -392,28 +392,32 @@ def compute_stop(sim: Simulation, stop: str, /, starting_x: float) -> float:
             effective_size: tuple[float, float, float] = rot.apply(
                 (hu.x_size, hu.y_size, hu.z_size)
             )
-            submap: Mosaic[float, float] = heightmap[
-                Interval(x.min, x.min + effective_size[0]),
-                Interval(z.min, z.min + effective_size[2]),
-            ]
-            submap.fuse()
             if (
-                len(submap) == 1
-                and submap[x.min, z.min] + effective_size[1] <= 8.5 * 12
+                x.min + effective_size[0] <= heightmap.x_range.max
+                and z.min + effective_size[2] <= heightmap.y_range.max
             ):
-                placement.x = x.min
-                placement.z = -z.min
-                placement.y = heightmap[x.min, z.min]
-                placement.orientation = rot
-                heightmap[
+                submap: Mosaic[float, float] = heightmap[
                     Interval(x.min, x.min + effective_size[0]),
                     Interval(z.min, z.min + effective_size[2]),
-                ] = (
-                    inf
-                    if Restriction.NO_STACKING in hu.restrictions
-                    else (placement.y + effective_size[1])
-                )
-                break
+                ]
+                submap.fuse()
+                if (
+                    len(submap) == 1
+                    and submap[x.min, z.min] + effective_size[1] <= 8.5 * 12
+                ):
+                    placement.x = x.min
+                    placement.z = -z.min
+                    placement.y = heightmap[x.min, z.min]
+                    placement.orientation = rot
+                    heightmap[
+                        Interval(x.min, x.min + effective_size[0]),
+                        Interval(z.min, z.min + effective_size[2]),
+                    ] = (
+                        inf
+                        if Restriction.NO_STACKING in hu.restrictions
+                        else (placement.y + effective_size[1])
+                    )
+                    break
         else:
             raise ValueError("Could not fit all items!")
         placement.save()
