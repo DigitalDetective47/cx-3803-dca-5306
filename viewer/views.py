@@ -16,6 +16,7 @@ STOP_COLOR_MAP = {
     "2A": "#22c55e",  # green
     "3A": "#f97316",  # orange
     "4A": "#a855f7",  # purple
+    "5A": "#ef4444",
 }
 
 DEFAULT_STOP_COLOR = "#9ca3af"  # grey for anything else
