@@ -140,17 +140,17 @@ class Mosaic(Generic[N, T]):
     @overload
     def _interval_index_helper(
         intervals: Sequence[Interval[N]], find: Interval[N]
-    ) -> slice[int, int, None]:
+    ) -> slice[Optional[int], Optional[int], None]:
         pass
 
     @staticmethod
     def _interval_index_helper(
         intervals: Sequence[Interval[N]], find: N | Interval[N]
-    ) -> int | slice[int, int, None]:
+    ) -> int | slice[Optional[int], Optional[int], None]:
         if isinstance(find, Interval):
             return slice(
-                Mosaic._interval_index_helper(intervals, find.min),
-                Mosaic._interval_index_helper(intervals, find.max),
+                None if find.min <= intervals[0].min else Mosaic._interval_index_helper(intervals, find.min),
+                None if find.max >= intervals[-1].max else Mosaic._interval_index_helper(intervals, find.max),
             )  # type:ignore[return-value]
         left: int = 0
         right: int = len(intervals)
@@ -245,22 +245,14 @@ class Mosaic(Generic[N, T]):
             self[x, y] = other[x.min, y.min]
 
     def __setitem__(self, key: tuple[Interval[N], Interval[N]], value: T, /) -> None:
-        try:
+        if key[0].min not in self._x_boundaries:
             self.slice_x(key[0].min)
-        except ValueError:
-            pass
-        try:
+        if key[0].max not in self._x_boundaries:
             self.slice_x(key[0].max)
-        except ValueError:
-            pass
-        try:
+        if key[1].min not in self._y_boundaries:
             self.slice_y(key[1].min)
-        except ValueError:
-            pass
-        try:
+        if key[1].max not in self._y_boundaries:
             self.slice_y(key[1].max)
-        except ValueError:
-            pass
 
         for x_index, y_index in product(
             range(
