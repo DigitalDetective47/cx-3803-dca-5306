@@ -401,7 +401,7 @@ def get_simplacements(request):
             'dest_x_coord': p.x,
             'dest_y_coord': p.y,
             'dest_z_coord': p.z,
-            # 'orientation': p.orientation,
+            'orientation': p.orientation.value,
             # 'x_size': p.item.x_size,
             # 'y_size': p.item.y_size,
             # 'z_size': p.item.z_size,
