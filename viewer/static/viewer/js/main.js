@@ -144,6 +144,7 @@ function addItemToScene(item) {
 
   const mesh = new THREE.Mesh(geometry, material);
 
+  mesh.userData.hu = item;
   // Position items outside the trailer
     const existingItemsCount = items.size;
   const offsetX = 1.5 * TRUCK_LENGTH + (existingItemsCount % 3) * 8;
