@@ -83,7 +83,7 @@ scene.add(ambientLight);
 
 
 // Add a truck
-const truckGeometry = new THREE.BoxGeometry(TRUCK_LENGTH, TRUCK_HEIGHT, TRUCK_WIDTH);
+const truckGeometry = new THREE.BoxGeometry(TRUCK_LENGTH + 0.1, TRUCK_HEIGHT + 0.1, TRUCK_WIDTH + 0.1);
 const truckMaterial = new THREE.MeshBasicMaterial({
   color: 0x222222,
   transparent: true,
@@ -92,7 +92,7 @@ const truckMaterial = new THREE.MeshBasicMaterial({
 
 // Create truck mesh
 const truck = new THREE.Mesh(truckGeometry, truckMaterial);
-truckGeometry.translate(TRUCK_LENGTH / 2, TRUCK_HEIGHT / 2 , -TRUCK_WIDTH / 2);
+truckGeometry.translate((TRUCK_LENGTH + 0.05) / 2, (TRUCK_HEIGHT + 0.05) / 2 , -(TRUCK_WIDTH + 0.05) / 2);
 // truck.position.y = 8.5 / 2 + 0.5;
 scene.add(truck);
 
