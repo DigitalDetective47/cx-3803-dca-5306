@@ -609,7 +609,7 @@ document.getElementById('add-item-form').addEventListener('submit', async (e) =>
       messageEl.style.display = 'block';
     }
   } catch (error) {
-    messageEl.textContent = 'Error adding item. Please try again.';
+    messageEl.textContent = 'Error adding HU. Please try again.';
     messageEl.className = 'message error';
     messageEl.style.display = 'block';
   }
@@ -1045,7 +1045,7 @@ window.deleteSelectedItem = async function() {
       document.getElementById('hu-info-panel')?.classList.remove('visible');
       showUserMessage(result.message, "success");
     } else {
-      showUserMessage(result.message || "Failed to delete item.", "error");
+      showUserMessage(result.message || "Failed to delete HU.", "error");
     }
 
   } catch (err) {

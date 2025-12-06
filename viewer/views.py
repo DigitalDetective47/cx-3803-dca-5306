@@ -110,7 +110,7 @@ def add_item(request):
 
         return JsonResponse({
             'success': True,
-            'message': f'Item {item.id} added successfully!',
+            'message': f'HU {item.id} added successfully!',
             'item': {
                 'id': item.id,
                 'weight': item.weight,
@@ -125,9 +125,9 @@ def add_item(request):
     except Exception as e:
         error_message = str(e)
         if 'UNIQUE constraint failed' in error_message or 'already exists' in error_message:
-            message = 'Error adding item. HU ID already exists.'
+            message = 'Error adding HU. HU ID already exists.'
         else:
-            message = 'Error adding item. Please check your input and try again.'
+            message = 'Error adding HU. Please check your input and try again.'
 
         return JsonResponse({
             'success': False,
@@ -434,7 +434,7 @@ def get_items(request):
     except Exception as e:
         return JsonResponse({
             'success': False,
-            'message': f'Error fetching items: {str(e)}'
+            'message': f'Error fetching HUs: {str(e)}'
         }, status=400)
 
 @require_http_methods(["GET"])
@@ -590,7 +590,7 @@ def create_load_with_csv(request):
 
         return JsonResponse({
             'success': True,
-            'message': f'Load "{simulation.name}" created with {items_created} items',
+            'message': f'Load "{simulation.name}" created with {items_created} HUs',
             'simulation': {
                 'id': simulation.id,
                 'name': simulation.name,
@@ -613,10 +613,10 @@ def delete_item(request, item_id):
         item.delete()
         return JsonResponse({
             'success': True,
-            'message': f'Item {item_id} deleted successfully.'
+            'message': f'HU {item_id} deleted successfully.'
         })
     except Exception as e:
         return JsonResponse({
             'success': False,
-            'message': f'Error deleting item: {str(e)}'
+            'message': f'Error deleting HU: {str(e)}'
         }, status=400)
