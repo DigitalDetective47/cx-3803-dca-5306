@@ -29,7 +29,7 @@ let previewMesh = null;
 export function createPreviewBox(hu) {
     const geometry = new THREE.BoxGeometry(hu.x_size, hu.y_size, hu.z_size);
     const material = new THREE.MeshStandardMaterial({
-        color: 0x88ccff,
+        color: hu.color || '#9ca3af',
         transparent: true,
         opacity: 0.8
     });
