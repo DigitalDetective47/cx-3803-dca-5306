@@ -593,7 +593,7 @@
         const loadsCount = document.getElementById('loads-count');
 
         if (data.success && data.simulations.length > 0) {
-          loadsCount.textContent = `${data.simulations.length} load${data.simulations.length !== 1 ? 's' : ''}`;
+          loadsCount.textContent = `${data.simulations.length} Load${data.simulations.length !== 1 ? 's' : ''}`;
 
           loadsGrid.innerHTML = data.simulations.map(sim => {
             const initial = sim.name.charAt(0).toUpperCase();
@@ -617,7 +617,7 @@
             `;
           }).join('');
         } else {
-          loadsCount.textContent = '0 loads';
+          loadsCount.textContent = '0 Loads';
           loadsGrid.innerHTML = `
             <div class="empty-state">
               <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
