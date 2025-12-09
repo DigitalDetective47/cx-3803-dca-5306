@@ -67,11 +67,6 @@ def add_item(request):
         if 'simulation_id' in data and data['simulation_id']:
             simulation = get_object_or_404(Simulation, id=data['simulation_id'])
 
-        shipment, created = Shipment.objects.get_or_create(
-            id=data['shipment'],
-            defaults={'name': f"Shipment {data['shipment']}"}
-        )
-
         if not float(data['x_size']) or not float(data['y_size']) or not float(data['z_size']):
             raise ValueError
 
@@ -81,7 +76,7 @@ def add_item(request):
             x_size=float(data['x_size']),
             y_size=float(data['y_size']),
             z_size=float(data['z_size']),
-            shipment=shipment,
+            shipment=simulation.shipment,
             stop=stop_value,
             color=color_for_stop(stop_value),
             temp_add=simulation
