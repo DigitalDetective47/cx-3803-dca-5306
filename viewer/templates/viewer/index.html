@@ -768,15 +768,53 @@
     .hu-info-delete-btn:active {
       transform: translateY(0);
     }
+
+
+    .hu-info-save-btn {
+      width: 100%;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%); /* Greenish */
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 10px; /* Space between this and delete button */
+    }
+
+    .hu-info-save-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+
+    .hu-info-save-btn:active {
+      transform: translateY(0);
+    }
+
+
+
+
+
   </style>
-   <script type="importmap">
+   <!-- <script type="importmap">
   {
     "imports": {
       "three": "{% static 'viewer/js/node_modules/three/build/three.module.js' %}",
       "three/examples/jsm/": "{% static 'viewer/js/node_modules/three/examples/jsm/' %}"
     }
   }
-  </script>
+  </script> -->
+
+      <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/examples/jsm/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
 </head>
 <body>
   <!-- 3D Canvas -->
@@ -1069,6 +1107,7 @@
       </div>
     </div>
     <div class="hu-info-actions">
+      <button class="hu-info-save-btn" onclick="saveCurrentPosition()">Save Position</button>
       <button class="hu-info-delete-btn" onclick="showDeleteModal()">Delete HU</button>
     </div>
   </div>

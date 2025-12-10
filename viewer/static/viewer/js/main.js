@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 
+let isDragging = false;
 
 const TRUCK_LENGTH = 53;
 const TRUCK_HEIGHT = 8.5;
@@ -117,6 +119,31 @@ controls.minDistance = 10;
 controls.maxDistance = 100;
 controls.target.copy(truckCenter);
 controls.update();
+const transformControl = new TransformControls(camera, renderer.domElement);
+window.transformControl = transformControl;
+
+// Important: When dragging the item, disable camera orbit so the view doesn't spin
+transformControl.addEventListener('dragging-changed', function (event) {
+    controls.enabled = !event.value;
+    if (event.value) {
+        // Dragging started
+        isDragging = true;
+    } else {
+        // Dragging ended. 
+        // DELAY resetting the flag so the subsequent 'click' event is ignored.
+        setTimeout(() => {
+            isDragging = false;
+        }, 100); 
+    }
+});
+
+// Optional: Add event listener to update backend/UI when drag ends
+transformControl.addEventListener('change', function () {
+    // Logic to update item coordinates in your local maps if needed
+    // e.g., if (selectedItem) updateInfoPanelCoordinates(selectedItem);
+});
+
+scene.add(transformControl);
 
 
 // Resize support
@@ -901,51 +928,223 @@ function showHuInfo(itemId) {
   panel.classList.add('visible');
 }
 
+// renderer.domElement.addEventListener('click', (event) => {
+//   const rect = renderer.domElement.getBoundingClientRect();
+
+//   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+//   mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+//   raycaster.setFromCamera(mouse, camera);
+
+//   const intersects = raycaster.intersectObjects(Array.from(items.values()), true);
+
+//   if (intersects.length > 0) {
+//     let mesh = intersects[0].object;
+//     while (!items.has([...items].find(([id, m]) => m === mesh)?.[0])) {
+//       mesh = mesh.parent;
+//       if (!mesh) break;
+//     }
+
+//     if (!mesh) return;
+
+//     if (selectedItem && selectedItem.material?.emissive) {
+//       selectedItem.material.emissive.set(0x000000);
+//     }
+
+//     selectedItem = mesh;
+//     if (selectedItem.material?.emissive) {
+//       selectedItem.material.emissive.set(0x00ff00);
+//     }
+
+//     transformControl.attach(selectedItem);
+
+//     // Find the item ID and show info panel
+//     const itemId = [...items.entries()].find(([, m]) => m === mesh)?.[0];
+//     if (itemId) {
+//       console.log("Selected Item:", itemId);
+//       showHuInfo(itemId);
+//     }
+//   } else {
+//     if (selectedItem && selectedItem.material?.emissive) {
+//       selectedItem.material.emissive.set(0x000000);
+//     }
+//     selectedItem = null;
+//     transformControl.detach();
+
+//     // Hide info panel when clicking empty space
+//     document.getElementById('hu-info-panel')?.classList.remove('visible');
+//   }
+// });
+
 renderer.domElement.addEventListener('click', (event) => {
-  const rect = renderer.domElement.getBoundingClientRect();
+    if (isDragging) return;
+    // if (transformControl.dragging) return;
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
 
-  raycaster.setFromCamera(mouse, camera);
+    // Intersect everything in the scene, not just the items map
+    // This ensures we catch the Outline/Edges if clicked
+    const intersects = raycaster.intersectObjects(scene.children, true);
 
-  const intersects = raycaster.intersectObjects(Array.from(items.values()), true);
+    // Helper to find the actual Box Mesh with data
+    let foundMesh = null;
 
-  if (intersects.length > 0) {
-    let mesh = intersects[0].object;
-    while (!items.has([...items].find(([id, m]) => m === mesh)?.[0])) {
-      mesh = mesh.parent;
-      if (!mesh) break;
+    if (intersects.length > 0) {
+        // Look for the first object that is part of our HU items
+        for (let i = 0; i < intersects.length; i++) {
+            let obj = intersects[i].object;
+
+            // Traverse up parents to find the object containing userData.hu
+            while (obj) {
+                if (obj.userData && obj.userData.hu) {
+                    foundMesh = obj;
+                    break;
+                }
+                obj = obj.parent;
+            }
+            if (foundMesh) break;
+        }
     }
 
-    if (!mesh) return;
+    // --- HANDLE SELECTION ---
+    if (foundMesh) {
+        // 1. Deselect previous
+        if (selectedItem && selectedItem !== foundMesh) {
+            if (selectedItem.material?.emissive) {
+                selectedItem.material.emissive.set(0x000000);
+            }
+        }
 
-    if (selectedItem && selectedItem.material?.emissive) {
-      selectedItem.material.emissive.set(0x000000);
-    }
+        selectedItem = foundMesh;
 
-    selectedItem = mesh;
-    if (selectedItem.material?.emissive) {
-      selectedItem.material.emissive.set(0x00ff00);
-    }
+        // 2. Highlight new selection
+        if (selectedItem.material?.emissive) {
+            selectedItem.material.emissive.set(0x00ff00);
+        }
 
-    // Find the item ID and show info panel
-    const itemId = [...items.entries()].find(([, m]) => m === mesh)?.[0];
-    if (itemId) {
-      console.log("Selected Item:", itemId);
-      showHuInfo(itemId);
+        // 3. Attach the Arrows (Gizmo)
+        // 
+        transformControl.attach(selectedItem);
+        
+
+        // 4. Update UI Panel
+        console.log("Selected Item:", selectedItem.userData.hu.id);
+        showHuInfo(selectedItem.userData.hu.id);
+
+    } else {
+        // --- CLICKED EMPTY SPACE ---
+        
+        // Deselect current
+        if (selectedItem && selectedItem.material?.emissive) {
+            selectedItem.material.emissive.set(0x000000);
+        }
+        
+        selectedItem = null;
+        
+        // Remove Arrows
+        transformControl.detach();
+
+        // Hide UI
+        document.getElementById('hu-info-panel')?.classList.remove('visible');
     }
-  } else {
-    if (selectedItem && selectedItem.material?.emissive) {
-      selectedItem.material.emissive.set(0x000000);
-    }
-    selectedItem = null;
-    // Hide info panel when clicking empty space
-    document.getElementById('hu-info-panel')?.classList.remove('visible');
-  }
 });
 
 
+// In main.js
+
+window.saveCurrentPosition = async function() {
+    if (!selectedItem) {
+        showUserMessage("No item selected", "error");
+        return;
+    }
+
+    const item = selectedItem.userData.hu;
+    if (!item) {
+        showUserMessage("Error: Missing item data", "error");
+        return;
+    }
+
+    // 1. Calculate Database Coordinates
+    // (Three.js Center -> Database Corner)
+    const w = item.x_size; 
+    const h = item.y_size;
+    const d = item.z_size;
+
+    const dbX = (selectedItem.position.x * 12) - (w / 2);
+    const dbY = (selectedItem.position.y * 12) - (h / 2);
+    const dbZ = (selectedItem.position.z * 12) + (d / 2);
+
+    // 2. Prepare Payload
+    const payload = {
+        id: item.id,
+        simulation_id: typeof SIMULATION_ID !== 'undefined' ? SIMULATION_ID : null,
+        x_coord: parseFloat(dbX.toFixed(2)),
+        y_coord: parseFloat(dbY.toFixed(2)),
+        z_coord: parseFloat(dbZ.toFixed(2)),
+        orientation: item.orientation || "XYZ" 
+    };
+
+    showUserMessage("Saving position...", "info");
+
+    try {
+        const response = await fetch('/api/set-sim-position/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showUserMessage("Position saved successfully!", "success");
+            
+            // --- NEW: Update Local Animation State ---
+            
+            // 1. Update the metadata object so future clicks show correct info
+            item.dest_x_coord = payload.x_coord;
+            item.dest_y_coord = payload.y_coord;
+            item.dest_z_coord = payload.z_coord;
+
+            // 2. Create a vector for the NEW target (where the box is right now)
+            const newTarget = selectedItem.position.clone();
+
+            // 3. Update the 'Active' Animation Queue
+            // If this item is currently waiting or moving, update its destination.
+            const animEntry = animQueue.find(q => q.id === item.id);
+            if (animEntry) {
+                animEntry.targetPos.copy(newTarget);
+            }
+
+            // 4. Update the 'Finished' Queue
+            // If this item was already loaded, update its record so Rewind works correctly.
+            const loadedEntry = loadedQueue.find(q => q.id === item.id);
+            if (loadedEntry) {
+                loadedEntry.targetPos.copy(newTarget);
+            }
+            
+            // 5. Update the 'Master' List
+            // This ensures that if you hit "Reset" and then "Animate" again without reloading,
+            // it remembers this new position.
+            const originalEntry = toBeLoadedItems.find(q => q.id === item.id);
+            if (originalEntry) {
+                originalEntry.targetPos.copy(newTarget);
+            }
+
+            // -----------------------------------------
+            
+        } else {
+            showUserMessage(result.message || "Failed to save position.", "error");
+        }
+    } catch (error) {
+        console.error("Save position error:", error);
+        showUserMessage("Network error saving position.", "error");
+    }
+};
 
 window.deleteSelectedItem = async function() {
   try {
@@ -1043,5 +1242,22 @@ function animate() {
     iframe.contentWindow.postMessage({ action: 'remove' }, '*');
   }
 }
+
+window.addEventListener('keydown', function (event) {
+    switch (event.key) {
+        case 't': // Translate (Move)
+            transformControl.setMode('translate');
+            break;
+        case 'r': // Rotate
+            transformControl.setMode('rotate');
+            break;
+        case '+': // Make arrows bigger
+            transformControl.setSize(transformControl.size + 0.1);
+            break;
+        case '-': // Make arrows smaller
+            transformControl.setSize(Math.max(transformControl.size - 0.1, 0.1));
+            break;
+    }
+});
 
 animate();
