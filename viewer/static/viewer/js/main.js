@@ -85,7 +85,7 @@ scene.add(ambientLight);
 
 
 // Add a truck
-const truckGeometry = new THREE.BoxGeometry(TRUCK_LENGTH, TRUCK_HEIGHT, TRUCK_WIDTH);
+const truckGeometry = new THREE.BoxGeometry(TRUCK_LENGTH + 0.1, TRUCK_HEIGHT + 0.1, TRUCK_WIDTH + 0.1);
 const truckMaterial = new THREE.MeshBasicMaterial({
   color: 0x222222,
   transparent: true,
@@ -94,7 +94,7 @@ const truckMaterial = new THREE.MeshBasicMaterial({
 
 // Create truck mesh
 const truck = new THREE.Mesh(truckGeometry, truckMaterial);
-truckGeometry.translate(TRUCK_LENGTH / 2, TRUCK_HEIGHT / 2 , -TRUCK_WIDTH / 2);
+truckGeometry.translate((TRUCK_LENGTH + 0.05) / 2, (TRUCK_HEIGHT + 0.05) / 2 , -(TRUCK_WIDTH + 0.05) / 2);
 // truck.position.y = 8.5 / 2 + 0.5;
 scene.add(truck);
 
@@ -249,14 +249,41 @@ async function loadItemsForAnimation() {
                     const halfX = (mesh.geometry.parameters.width ?? 0) / 2;
                     const halfY = (mesh.geometry.parameters.height ?? 0) / 2;
                     const halfZ = (mesh.geometry.parameters.depth ?? 0) / 2;
+                    let halfX2, halfY2, halfZ2;
+                    if (item.orientation === "XYZ") {
+                      halfX2 = halfX;
+                      halfY2 = halfY;
+                      halfZ2 = halfZ;
+                    } else if (item.orientation === "XZY") {
+                      halfX2 = halfX;
+                      halfZ2 = halfY;
+                      halfY2 = halfZ;
+                    } else if (item.orientation === "YXZ") {
+                      halfY2 = halfX;
+                      halfX2 = halfY;
+                      halfZ2 = halfZ;
+                    } else if (item.orientation === "YZX") {
+                      halfY2 = halfX;
+                      halfZ2 = halfY;
+                      halfX2 = halfZ;
+                    } else if (item.orientation === "ZXY") {
+                      halfZ2 = halfX;
+                      halfX2 = halfY;
+                      halfY2 = halfZ;
+                    } else if (item.orientation === "ZYX") {
+                      halfZ2 = halfX;
+                      halfY2 = halfY;
+                      halfX2 = halfZ;
+                    }
                     return {
                         id: item.hu_id,
                         mesh: mesh,
                         targetPos: new THREE.Vector3(
-                            (item.dest_x_coord + halfX * 12) / 12, // add half-width to move to center
-                            (item.dest_y_coord + halfY * 12) / 12, // add half-height to move to center
-                            (item.dest_z_coord - halfZ * 12) / 12
+                            (item.dest_x_coord + halfX2 * 12) / 12, // add half-width to move to center
+                            (item.dest_y_coord + halfY2 * 12) / 12, // add half-height to move to center
+                            (item.dest_z_coord - halfZ2 * 12) / 12
                         ),
+                        targetRot: item.orientation,
                         x_coord: item.dest_x_coord,
                         y_coord: item.dest_y_coord,
                         z_coord: item.dest_z_coord
@@ -298,10 +325,48 @@ function animateItemsSequentially() {
     const meshObj = animQueue[0];
     const mesh = meshObj.mesh;
     const target = meshObj.targetPos;
+    const targetRot = new THREE.Quaternion();
+    if (meshObj.targetRot === "XZY") {
+      targetRot.setFromRotationMatrix(new THREE.Matrix4(
+       -1, 0, 0, 0,
+        0, 0, 1, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 1,
+      ));
+    } else if (meshObj.targetRot === "YXZ") {
+      targetRot.setFromRotationMatrix(new THREE.Matrix4(
+        0, 1, 0, 0,
+        1, 0, 0, 0,
+        0, 0,-1, 0,
+        0, 0, 0, 1,
+      ));
+    } else if (meshObj.targetRot === "YZX") {
+      targetRot.setFromRotationMatrix(new THREE.Matrix4(
+        0, 0, 1, 0,
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 1,
+      ));
+    } else if (meshObj.targetRot === "ZXY") {
+      targetRot.setFromRotationMatrix(new THREE.Matrix4(
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        1, 0, 0, 0,
+        0, 0, 0, 1,
+      ));
+    } else if (meshObj.targetRot === "ZYX") {
+      targetRot.setFromRotationMatrix(new THREE.Matrix4(
+        0, 0, 1, 0,
+        0,-1, 0, 0,
+        1, 0, 0, 0,
+        0, 0, 0, 1,
+      ));
+    }
 
     // Check distance and snap/lerp
     if (mesh.position.distanceTo(target) < 0.01) {
         mesh.position.copy(target);
+        mesh.quaternion.copy(targetRot);
         
         // *** MODIFIED: Move item from 'to-do' to 'done' stack ***
         const finishedItem = animQueue.shift(); // Remove from 'to-do'
@@ -314,6 +379,7 @@ function animateItemsSequentially() {
         }
     } else {
         mesh.position.lerp(target, animSpeed);
+        mesh.quaternion.slerp(targetRot, animSpeed);
     }
 
 
@@ -353,11 +419,13 @@ function animateRewind() {
 
     if (mesh.position.distanceTo(target) < 0.05) {
         mesh.position.copy(target);
+        mesh.quaternion.identity();
         rewindItem = null; // We are done rewinding this item
         // The animation is now in a "PAUSED" state
     } else {
         // Move back to the original position
         mesh.position.lerp(target, animSpeed);
+        mesh.quaternion.slerp(new THREE.Quaternion, animSpeed);
     }
 }
 
@@ -367,6 +435,7 @@ function startAnimation() {
         id: item.id,
         mesh: items.get(item.id),
         targetPos: item.targetPos,
+        targetRot: item.targetRot,
         originalPos: items.get(item.id).userData.originalPos.clone(),
         done: false
     }));
@@ -567,7 +636,7 @@ document.getElementById('add-item-form').addEventListener('submit', async (e) =>
       messageEl.style.display = 'block';
     }
   } catch (error) {
-    messageEl.textContent = 'Error adding item. Please try again.';
+    messageEl.textContent = 'Error adding HU. Please try again.';
     messageEl.className = 'message error';
     messageEl.style.display = 'block';
   }
@@ -1175,7 +1244,7 @@ window.deleteSelectedItem = async function() {
       document.getElementById('hu-info-panel')?.classList.remove('visible');
       showUserMessage(result.message, "success");
     } else {
-      showUserMessage(result.message || "Failed to delete item.", "error");
+      showUserMessage(result.message || "Failed to delete HU.", "error");
     }
 
   } catch (err) {

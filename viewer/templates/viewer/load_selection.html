@@ -289,6 +289,10 @@
       margin-bottom: 12px;
     }
 
+    .load-card-header > div:first-child {
+      transform: translateY(6px);
+    }
+
     .load-card h3 {
       color: #111827;
       font-size: 16px;
@@ -313,6 +317,7 @@
       font-weight: bold;
       font-size: 16px;
       flex-shrink: 0;
+      transform: translateY(6px);
     }
 
     .empty-state {
@@ -530,7 +535,7 @@
     <!-- Delete Confirmation Modal -->
     <div id="delete-modal">
       <div class="modal-content">
-        <h3 id="delete-modal-text">Are you sure you want to delete this item?</h3>
+        <h3 id="delete-modal-text">Are you sure you want to delete this HU?</h3>
         <div class="modal-buttons">
           <button onclick="hideDeleteModal()" class="modal-cancel">Cancel</button>
           <button onclick="deleteSelectedItem()" class="modal-delete-confirm">Delete</button>
@@ -593,7 +598,7 @@
         const loadsCount = document.getElementById('loads-count');
 
         if (data.success && data.simulations.length > 0) {
-          loadsCount.textContent = `${data.simulations.length} load${data.simulations.length !== 1 ? 's' : ''}`;
+          loadsCount.textContent = `${data.simulations.length} Load${data.simulations.length !== 1 ? 's' : ''}`;
 
           loadsGrid.innerHTML = data.simulations.map(sim => {
             const initial = sim.name.charAt(0).toUpperCase();
@@ -617,7 +622,7 @@
             `;
           }).join('');
         } else {
-          loadsCount.textContent = '0 loads';
+          loadsCount.textContent = '0 Loads';
           loadsGrid.innerHTML = `
             <div class="empty-state">
               <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">

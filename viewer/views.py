@@ -67,11 +67,6 @@ def add_item(request):
         if 'simulation_id' in data and data['simulation_id']:
             simulation = get_object_or_404(Simulation, id=data['simulation_id'])
 
-        shipment, created = Shipment.objects.get_or_create(
-            id=data['shipment'],
-            defaults={'name': f"Shipment {data['shipment']}"}
-        )
-
         if not float(data['x_size']) or not float(data['y_size']) or not float(data['z_size']):
             raise ValueError
 
@@ -81,7 +76,7 @@ def add_item(request):
             x_size=float(data['x_size']),
             y_size=float(data['y_size']),
             z_size=float(data['z_size']),
-            shipment=shipment,
+            shipment=simulation.shipment,
             stop=stop_value,
             color=color_for_stop(stop_value),
             temp_add=simulation
@@ -110,7 +105,7 @@ def add_item(request):
 
         return JsonResponse({
             'success': True,
-            'message': f'Item {item.id} added successfully!',
+            'message': f'HU {item.id} added successfully!',
             'item': {
                 'id': item.id,
                 'weight': item.weight,
@@ -125,9 +120,9 @@ def add_item(request):
     except Exception as e:
         error_message = str(e)
         if 'UNIQUE constraint failed' in error_message or 'already exists' in error_message:
-            message = 'Error adding item. HU ID already exists.'
+            message = 'Error adding HU. HU ID already exists.'
         else:
-            message = 'Error adding item. Please check your input and try again.'
+            message = 'Error adding HU. Please check your input and try again.'
 
         return JsonResponse({
             'success': False,
@@ -401,7 +396,7 @@ def get_simplacements(request):
             'dest_x_coord': p.x,
             'dest_y_coord': p.y,
             'dest_z_coord': p.z,
-            # 'orientation': p.orientation,
+            'orientation': p.orientation.value,
             # 'x_size': p.item.x_size,
             # 'y_size': p.item.y_size,
             # 'z_size': p.item.z_size,
@@ -434,7 +429,7 @@ def get_items(request):
     except Exception as e:
         return JsonResponse({
             'success': False,
-            'message': f'Error fetching items: {str(e)}'
+            'message': f'Error fetching HUs: {str(e)}'
         }, status=400)
 
 @require_http_methods(["GET"])
@@ -590,7 +585,7 @@ def create_load_with_csv(request):
 
         return JsonResponse({
             'success': True,
-            'message': f'Load "{simulation.name}" created with {items_created} items',
+            'message': f'Load "{simulation.name}" created with {items_created} HUs',
             'simulation': {
                 'id': simulation.id,
                 'name': simulation.name,
@@ -613,10 +608,10 @@ def delete_item(request, item_id):
         item.delete()
         return JsonResponse({
             'success': True,
-            'message': f'Item {item_id} deleted successfully.'
+            'message': f'HU {item_id} deleted successfully.'
         })
     except Exception as e:
         return JsonResponse({
             'success': False,
-            'message': f'Error deleting item: {str(e)}'
+            'message': f'Error deleting HU: {str(e)}'
         }, status=400)
